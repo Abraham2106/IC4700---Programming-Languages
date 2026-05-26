@@ -67,6 +67,8 @@ cuando digo X, a que cosa concreta me refiero?
 
 Ese "algo" puede variar segun el lenguaje y el nivel de analisis.
 
+Por eso no conviene traducir binding solo como "valor actual". A veces el binding relevante es a una funcion, a un objeto, a un tipo o a una ubicacion de memoria.
+
 ## 5. Binding dinamico
 
 Cuando se habla de binding dinamico en este tipo de curso, normalmente se alude a que cierta asociacion se resuelve o cambia en tiempo de ejecucion.
@@ -77,6 +79,8 @@ Ejemplos posibles:
 - enlazado dinamico de nombres segun ejecucion
 
 No debe confundirse con ambito dinamico.
+
+Tampoco debe confundirse con mutabilidad. Que una variable pueda cambiar no significa automaticamente que el lenguaje use binding dinamico en el sentido teorico del curso.
 
 ## 6. Python: ambito y binding
 
@@ -111,6 +115,8 @@ def outer():
 
 `inner` imprime `20` porque toma el `x` del entorno lexico donde fue definida, no del lugar desde donde eventualmente podria ser llamada.
 
+Ese es justamente el comportamiento esperado de un closure en un lenguaje con ambito lexico.
+
 ## 7. Prolog y binding
 
 En Prolog, las variables se ligan por unificacion.
@@ -138,11 +144,27 @@ Esto muestra una diferencia fuerte con lenguajes imperativos:
 
 Esa ligadura no se comporta como asignacion destructiva.
 
+Tambien conviene notar la diferencia entre:
+
+```prolog
+X = 3, X = 3.
+```
+
+que si funciona, y:
+
+```prolog
+X = 3, X = 4.
+```
+
+que falla, porque la segunda meta ya no es consistente con la ligadura previa.
+
 ## 8. Cada clausula tiene sus propias variables
 
 En Prolog, las variables de una clausula son locales a esa clausula.
 
 El sistema hace renombramiento automatico para evitar choques accidentales entre distintas invocaciones.
+
+Ese renombramiento es una de las razones por las que las reglas de Prolog pueden reutilizar nombres como `X` y `Y` sin interferencia entre llamadas distintas.
 
 ## 9. Respuestas directas
 
@@ -169,6 +191,8 @@ Por ejemplo:
 Si en clase usan una definicion mas restringida de binding dinamico, conviene seguir esa definicion, pero en el sentido habitual de lenguajes dinamicos la respuesta esperable es `si`.
 
 Lo importante en examen es no confundir esta respuesta con la del ambito. Python puede tener resolucion y comportamiento dinamico en ejecucion, pero sigue siendo de ambito lexico.
+
+Esa es probablemente la trampa mas comun en este tema.
 
 ### 3. C es de tipos estrictos?
 
@@ -206,6 +230,8 @@ No hay que confundir:
 
 Son ideas relacionadas con tiempo de ejecucion, pero no significan lo mismo.
 
+Una buena respuesta de examen suele mencionar explicitamente esa separacion.
+
 ## 11. Ideas clave para estudiar
 
 - ambito = donde un nombre es visible
@@ -222,3 +248,12 @@ Una forma simple de recordarlo es:
 - `binding` pregunta "a que esta ligado?"
 - `lexico` significa "segun el texto del programa"
 - `dinamico` significa "segun la ejecucion"
+
+## 13. Mini ejemplo comparativo
+
+Si una funcion usa una variable libre `x`, la pregunta correcta es:
+
+- toma `x` del lugar donde fue escrita?
+- o del lugar desde donde fue llamada?
+
+La primera opcion corresponde a ambito lexico; la segunda seria ambito dinamico.

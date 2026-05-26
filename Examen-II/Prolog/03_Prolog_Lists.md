@@ -563,3 +563,30 @@ El punto clave es siempre el mismo:
 - identificar el caso base
 - descomponer la estructura con `[H|T]`
 - definir claramente la recursion
+
+---
+
+## 21. Soluciones Destacadas para Listas y Matrices
+
+### Ejercicio 9. Extraer Diagonal Principal
+Para extraer la diagonal de una matriz cuadrada de cualquier tamaño:
+```prolog
+diagonal(Matrix, Diagonal) :-
+    diagonal(Matrix, 0, Diagonal).
+
+% Caso base: matriz vacia
+diagonal([], _, []).
+% Caso recursivo: extrae el elemento K-esimo de la primera fila, e incrementa K
+diagonal([Row|Rows], K, [X|Rest]) :-
+    nth0(K, Row, X),
+    K1 is K + 1,
+    diagonal(Rows, K1, Rest).
+```
+
+### Ejercicio 10. Análisis de Complejidad: `reverse_list/2` vs `reverse_acc/3`
+- **Versión con `append/3` ($O(N^2)$)**:
+  - En cada llamada recursiva de `reverse_list([H|T], R)`, Prolog primero invierte la cola (costo recurrente) y luego ejecuta `append(RT, [H], R)`.
+  - Como `append/3` sobre una lista de tamaño $K$ toma tiempo $O(K)$, la relación de recurrencia es $T(N) = T(N-1) + O(N)$, lo que resulta en un tiempo total de **$O(N^2)$**.
+- **Versión con acumulador ($O(N)$)**:
+  - En `reverse_acc([H|T], Acc, R)`, el elemento `H` se coloca al frente del acumulador usando la unificación `[H|Acc]`, la cual ocurre en tiempo constante **$O(1)$**.
+  - La relación de recurrencia es $T(N) = T(N-1) + O(1)$, lo que resulta en un tiempo total de **$O(N)$** y es además optimizable mediante **recursión de cola** (Tail Call Optimization - TCO), lo que significa que consume $O(1)$ espacio en la pila de llamadas.

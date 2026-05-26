@@ -377,14 +377,123 @@ int main(int argc, char *argv[]) {
 }
 ```
 
-## 17. Ideas clave para estudiar
+## 17. Operaciones Colectivas en MPI
 
-- MPI usa procesos con memoria privada
-- `MPI_Init` va al inicio y `MPI_Finalize` al final
-- `rank` identifica al proceso actual
-- `size` indica el total de procesos
-- `MPI_Send` y `MPI_Recv` coordinan la comunicacion
-- los tags deben coincidir
-- `MPI_COMM_WORLD` incluye a todos los procesos
-- el patron maestro-esclavo es muy comun
-- el orden de envio y recepcion importa para evitar bloqueos
+En lugar de hacer envíos individuales de punto a punto (`MPI_Send` y `MPI_Recv`), MPI provee funciones de comunicación colectiva en las que participan **todos** los procesos del comunicador:
+
+### 1. `MPI_Bcast` (Broadcasting)
+Envía un dato desde un proceso raíz a todos los demás procesos.
+```c
+MPI_Bcast(buffer, count, datatype, root, communicator);
+```
+
+### 2. `MPI_Reduce`
+Combina los valores de todos los procesos usando una operación aritmética/lógica (como suma, mínimo, máximo) y coloca el resultado final en el proceso raíz.
+```c
+MPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, communicator);
+```
+*Operaciones comunes (`op`)*: `MPI_SUM`, `MPI_MIN`, `MPI_MAX`, `MPI_PROD`.
+
+### 3. `MPI_Scatter`
+Divide un arreglo del proceso raíz en partes iguales y envía una parte a cada proceso.
+```c
+MPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+```
+
+### 4. `MPI_Gather`
+Reúne elementos individuales de cada proceso en un solo arreglo en el proceso raíz (lo opuesto a Scatter).
+```c
+MPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+```
+
+---
+
+## 18. Ejemplo de Código en C: Suma Distribuida usando Colectivos
+
+Este programa hace exactamente lo mismo que el anterior, pero usando `MPI_Bcast` para difundir parámetros y `MPI_Reduce` para acumular el resultado. Es mucho más limpio y eficiente:
+
+```c
+#include <stdio.h>
+#include <mpi.h>
+
+int main(int argc, char *argv[]) {
+    int rank, size;
+    int N = 100;
+    int parcial = 0, total = 0;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    // Difundir N a todos los procesos por si no lo tenian inicializado
+    MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int chunk = N / size;
+    int start = rank * chunk + 1;
+    int end = (rank == size - 1) ? N : (rank + 1) * chunk;
+
+    for (int i = start; i <= end; i++) {
+        parcial += i;
+    }
+
+    // Reducir todas las sumas parciales sumándolas en la variable total del rank 0
+    MPI_Reduce(&parcial, &total, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        printf("Suma total (colectiva) = %d\n", total);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+```
+
+---
+
+## 19. Análisis de Deadlock en MPI
+
+Un deadlock (bloqueo mutuo) ocurre si dos procesos esperan indefinidamente por un evento que el otro debe generar.
+
+### Ejemplo con Deadlock:
+```c
+// Proceso 0
+MPI_Send(&send_val, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+MPI_Recv(&recv_val, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &status);
+
+// Proceso 1
+MPI_Send(&send_val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+MPI_Recv(&recv_val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+```
+*Por qué bloquea*: Ambos procesos ejecutan `MPI_Send` bloqueante al mismo tiempo. Si la red no tiene suficiente espacio de buffer interno, ninguno de los dos avanzará a su `MPI_Recv`.
+
+### Solución A: Ordenar envíos y recepciones
+```c
+// Proceso 0
+MPI_Send(&send_val, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+MPI_Recv(&recv_val, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, &status);
+
+// Proceso 1
+MPI_Recv(&recv_val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+MPI_Send(&send_val, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+```
+
+### Solución B: Usar `MPI_Sendrecv`
+MPI provee una función atómica para enviar y recibir datos en una sola llamada sin peligro de deadlock:
+```c
+MPI_Sendrecv(&send_val, 1, MPI_INT, dest, send_tag,
+             &recv_val, 1, MPI_INT, src, recv_tag,
+             MPI_COMM_WORLD, &status);
+```
+
+---
+
+## 20. Ideas clave para estudiar
+
+- MPI usa procesos independientes con **memoria privada** (no comparten variables).
+- `MPI_Init` inicializa el entorno y `MPI_Finalize` lo libera.
+- `rank` identifica de forma única a cada proceso (de 0 a $size-1$).
+- `size` indica el número total de procesos.
+- `MPI_Send` y `MPI_Recv` son las primitivas básicas bloqueantes de punto a punto.
+- Los **colectivos** (`MPI_Bcast`, `MPI_Reduce`, `MPI_Scatter`, `MPI_Gather`) involucran a todos los procesos y evitan bucles de envío manuales.
+- El **deadlock** se previene ordenando los envíos y recepciones o usando `MPI_Sendrecv`.
+- `MPI_COMM_WORLD` es el comunicador global por defecto.

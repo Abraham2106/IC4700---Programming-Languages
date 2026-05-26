@@ -46,6 +46,8 @@ La idea de fondo es que el lenguaje protege la diferencia semantica entre tipos.
 
 Una cadena y un entero no se mezclan solo porque "parece conveniente". Si el programador quiere una conversion, debe hacerla de forma explicita.
 
+Eso suele producir programas mas predecibles, porque las fronteras entre tipos quedan mas claras y las conversiones importantes no ocurren silenciosamente.
+
 ## 3. Tipado debil
 
 En un lenguaje debilmente tipado:
@@ -69,6 +71,22 @@ Y eso no es solo una curiosidad sintactica: muestra que el lenguaje decide coerc
 
 Ese comportamiento puede ser util en scripts cortos, pero tambien puede introducir errores sutiles cuando el programador esperaba otra cosa.
 
+Otro ejemplo muy citado es:
+
+```javascript
+"5" - 3
+```
+
+que produce `2`, mientras que:
+
+```javascript
+"5" + 3
+```
+
+produce `"53"`.
+
+Ese contraste muestra que la coercion implicita no siempre sigue una intuicion uniforme.
+
 ## 4. Tipado estatico
 
 En un lenguaje estatico:
@@ -77,6 +95,8 @@ En un lenguaje estatico:
 - el compilador puede detectar muchos errores
 
 Eso no significa que todos los errores posibles se detecten en compilacion, pero si que una parte importante de la disciplina de tipos ocurre antes de ejecutar el programa.
+
+En la practica, eso ayuda mucho para refactorizar y para mover errores hacia etapas mas tempranas del desarrollo.
 
 Ejemplos:
 
@@ -91,6 +111,8 @@ En un lenguaje dinamico:
 - los tipos reales de los valores se manejan en ejecucion
 
 En estos lenguajes, una variable puede referirse a distintos tipos de valores en distintos momentos, siempre que el lenguaje lo permita.
+
+La ventaja es flexibilidad. El costo es que algunos errores aparecen tarde, solo cuando cierta ruta del programa realmente se ejecuta.
 
 Ejemplos:
 
@@ -141,6 +163,8 @@ porque:
 
 Por eso, aunque C tiene declaraciones de tipos y verificacion en compilacion, no ofrece la misma disciplina fuerte que lenguajes como Haskell o Rust.
 
+Por eso muchas preguntas de examen distinguen entre "estatico" y "estricto" o "fuerte": C cumple mas claramente lo primero que lo segundo.
+
 ## 8. Ejemplos utiles
 
 ### Python
@@ -175,6 +199,8 @@ int x = 3.7;
 ```
 
 trunca silenciosamente.
+
+Dicho de forma mas clara: el lenguaje acepta una conversion potencialmente problematica sin obligar al programador a hacerla explicita.
 
 Ese detalle de "silenciosamente" es justamente parte de la intuicion de debilidad: el lenguaje acepta operaciones potencialmente problemáticas sin obligar al programador a reconocer la conversion de forma explicita.
 
@@ -218,3 +244,14 @@ Afectan cosas muy concretas:
 - que conversiones ocurren sin avisar
 - que tan facil es refactorizar codigo
 - que tan confiable es el analisis del compilador
+
+## 13. Regla corta para examen
+
+Si la pregunta aparece muy resumida, una respuesta util es:
+
+- Python: dinamico y fuerte
+- JavaScript: dinamico y debil
+- Rust: estatico y fuerte
+- C: estatico y relativamente debil
+
+Pero la mejor respuesta no se queda en la tabla: da un ejemplo que muestre por que.

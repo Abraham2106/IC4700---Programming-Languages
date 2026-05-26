@@ -638,23 +638,88 @@ fn main() {
 
 Esto se llama `shadowing`.
 
-### Diferencia con mutabilidad
-
-- con `mut`, cambia la misma variable
 - con shadowing, se crea una nueva variable con el mismo nombre
 
-## 24. Resumen final
+---
+
+## 24. Punteros Inteligentes (Smart Pointers) en Rust
+
+Cuando necesitamos patrones de propiedad más avanzados que la propiedad única de `let`:
+
+1. **`Box<T>`**:
+   - **Propósito**: Aloja un valor en el **heap** en lugar del stack.
+   - **Propiedad**: Propiedad única (se mueve, no se copia).
+   - **Caso típico**: Estructuras recursivas cuyo tamaño no se conoce en compilación (ej: nodos de un árbol).
+
+2. **`Rc<T>` (Reference Counted)**:
+   - **Propósito**: Permite **propiedad compartida** (múltiples dueños) en el mismo hilo.
+   - **Funcionamiento**: Mantiene un contador de referencias. Cuando el contador llega a 0, el valor se libera.
+   - **Limitación**: El dato contenido es estrictamente inmutable y **no es thread-safe**.
+
+3. **`Arc<T>` (Atomically Reference Counted)**:
+   - **Propósito**: Igual que `Rc<T>`, pero utiliza operaciones atómicas para el contador.
+   - **Caso típico**: Compartir datos de forma segura entre **múltiples hilos (concurrencia)**.
+
+4. **`RefCell<T>`**:
+   - **Propósito**: Implementa **mutabilidad interior**.
+   - **Funcionamiento**: Permite modificar el valor dentro de una referencia inmutable, moviendo las reglas de préstamo de tiempo de compilación a **tiempo de ejecución**. Si violas las reglas, el programa entra en pánico (`panic!`) en ejecución en vez de dar error en compilación.
+
+---
+
+## 25. Lifetimes (Tiempos de Vida)
+
+Los tiempos de vida en Rust (`'a`) son una anotación para el compilador que garantiza que **ninguna referencia apunte a datos liberados** (dangling pointers).
+
+- **Regla fundamental**: El tiempo de vida de una referencia no puede ser mayor que el tiempo de vida del dueño de los datos.
+- *Ejemplo con anotación*:
+  ```rust
+  fn mayor_cadena<'a>(x: &'a str, y: &'a str) -> &'a str {
+      if x.len() > y.len() { x } else { y }
+  }
+  ```
+  *(Le dice al compilador que la referencia devuelta vivirá al menos tanto como el menor de los tiempos de vida de las entradas $x$ e $y$)*.
+
+---
+
+## 26. Representación Visual de Memoria (Stack vs Heap)
+
+Considere este código:
+```rust
+let x = 5;
+let s1 = String::from("hola");
+let s2 = &s1;
+```
+
+Visualización en memoria:
+```text
+      STACK                              HEAP
++---------------+                 +-----------------+
+| x   | 5       |                 | (Datos de s1)   |
++---------------+                 | ['h','o','l','a']
+| s1  | pointer |---------------->+-----------------+
+|     | cap: 4  |
+|     | len: 4  |
++---------------+
+| s2  | pointer | (apunta a s1 en el Stack, no al heap directamente)
++---------------+
+```
+
+---
+
+## 27. Resumen final
 
 Ideas que debe dominar:
 
-- Rust es de tipado fuerte y estatico
-- las variables son inmutables por defecto
-- `String` y `&str` no son lo mismo
-- `match` exige cobertura completa
-- `String` normalmente se mueve, no se copia
-- borrowing permite usar valores sin transferir ownership
-- `&T` sirve para leer
-- `&mut T` sirve para modificar
-- no se pueden mezclar prestamos incompatibles al mismo tiempo
+- Rust es de tipado fuerte y estatico.
+- Las variables son inmutables por defecto para garantizar concurrencia sin carreras.
+- `String` (dueño de memoria dinámica en heap) y `&str` (referencia de lectura a un segmento de texto) son tipos distintos.
+- `match` exige cobertura completa (exhaustividad) garantizando robustez.
+- `String` se mueve por defecto (move semantics) al asignarse o pasarse a funciones a menos que se clone o preste.
+- **Borrowing** (préstamo) permite dar acceso temporal:
+  - Se admiten infinitas referencias inmutables `&T`.
+  - Se admite solo una referencia mutable `&mut T` por scope.
+  - **No se pueden mezclar ambas**.
+- Los **Punteros Inteligentes** resuelven casos especiales: `Box` para heap, `Rc` para hilos únicos, `Arc` para multihilo, y `RefCell` para mutabilidad interior.
+- Los **Lifetimes** aseguran que las referencias siempre sean válidas en tiempo de ejecución.
 
-Si entiende estos puntos, ya tiene la base correcta para problemas pequenos y para casi todas las preguntas introductorias de Ownership y Borrowing.
+Si entiende estos puntos, ya tiene la base correcta para problemas pequeños y para casi todas las preguntas introductorias de Rust en un examen de Lenguajes de Programación.

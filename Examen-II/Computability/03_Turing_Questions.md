@@ -73,3 +73,40 @@ La idea profunda es esta:
 - menos expresividad puede traer mas control teorico
 
 Por eso, no todos los lenguajes deberian aspirar a ser completamente universales.
+
+---
+
+## 7. Pregunta de Examen: ¿Qué es el Teorema de Rice?
+
+El **Teorema de Rice** establece que:
+> Cualquier propiedad semántica no trivial de los lenguajes reconocidos por máquinas de Turing es **indecidible**.
+
+- **Propiedad Semántica**: Una propiedad del comportamiento del programa (el lenguaje que acepta), no de su código sintáctico (ej: "el programa acepta la cadena 'hola'", "el programa no acepta nada", "el programa termina para todas las entradas").
+- **No Trivial**: Propiedades que algunas máquinas de Turing tienen y otras no.
+- **Consecuencia**: Es imposible escribir un programa que analice el código de cualquier otro programa y determine de manera confiable si cumple con una característica de comportamiento (ej: si está libre de fallos de división por cero, o si hace lo que especifica el cliente).
+
+---
+
+## 8. Pregunta de Examen: ¿Por qué es imposible un calificador automático de ciclos infinitos?
+
+Suponga que un profesor quiere programar un sistema que reciba tareas de estudiantes (código de Python, C, etc.) y detecte automáticamente con un 100% de precisión si el código contiene ciclos infinitos para una entrada dada.
+- **Respuesta**: Esto es exactamente el **Problema del Halting** ($HALT_{TM}$). Dado que Python/C son lenguajes Turing universales, y el Problema del Halting es matemáticamente indecidible, es imposible construir dicho calificador automático. Cualquier intento de programa fallará en algunos casos (ya sea entrando en ciclo infinito él mismo, o dando respuestas incorrectas).
+
+---
+
+## 9. Pregunta de Examen: Reducción de $A_{TM}$ a $E_{TM}$
+
+Demuestre que el lenguaje de vaciedad $E_{TM} = \{ \langle M \rangle \mid M \text{ es una TM y } L(M) = \emptyset \}$ es indecidible reduciendo $A_{TM}$ a él.
+- **Respuesta**:
+  1. Suponga que existe un decisor $R$ para $E_{TM}$.
+  2. Construimos un decisor $S$ para $A_{TM}$ que toma como entrada $\langle M, w \rangle$:
+     - Construye una nueva máquina de Turing $M_1$ que toma una entrada $x$:
+       - Si $x \neq w$, $M_1$ rechaza.
+       - Si $x = w$, corre $M$ en $w$ y si $M$ acepta, $M_1$ acepta.
+     - Corre el decisor $R$ sobre la entrada $\langle M_1 \rangle$.
+     - Si $R$ dice que $L(M_1) = \emptyset$ (es vacío), significa que $M$ no acepta $w$, por lo que $S$ **rechaza**.
+     - Si $R$ dice que $L(M_1) \neq \emptyset$, significa que $M$ sí acepta $w$, por lo que $S$ **acepta**.
+  3. Dado que $S$ decide $A_{TM}$ usando a $R$, y sabemos que $A_{TM}$ es indecidible, esto es una contradicción.
+  4. Por lo tanto, $E_{TM}$ es indecidible.
+
+

@@ -423,7 +423,53 @@ Despues se calcula `compuesto/1` negando algo que ya fue determinado en un estra
 - CSP significa buscar valores que satisfacen restricciones
 - Prolog resuelve muchos CSP con generate-and-test y backtracking
 - el orden de las restricciones afecta mucho el rendimiento
-- Datalog sacrifica expresividad para garantizar terminacion
-- una variable debe quedar acotada por literales positivos para ser segura
-- la negacion en Datalog requiere estratificacion
 - EDB son hechos base; IDB son predicados definidos por reglas
+
+---
+
+## 19. El Operador Corte (`!`) en Prolog
+
+El operador de corte, escrito como `!`, es un predicado especial que siempre tiene éxito, pero que **bloquea el backtracking** para todas las opciones elegidas desde que se invocó la regla que contiene el corte.
+
+- **Efecto procedimental**: Elimina todos los choice points posteriores dentro de la regla actual y descarta probar otras cláusulas del mismo predicado.
+- **Tipos de Cortes**:
+  1. **Corte Verde (Green Cut)**:
+     - No cambia el significado declarativo (semántico) del programa.
+     - Solo mejora la eficiencia evitando búsquedas innecesarias en ramas que sabemos que no producirán más soluciones.
+     - *Ejemplo*:
+       ```prolog
+       max(X, Y, X) :- X >= Y, !.
+       max(X, Y, Y) :- X < Y.
+       ```
+  2. **Corte Rojo (Red Cut)**:
+     - Cambia el significado declarativo del programa si se elimina.
+     - Si se quita, el programa empieza a dar respuestas incorrectas.
+     - *Ejemplo (Peligroso si se lee solo declarativamente)*:
+       ```prolog
+       max(X, Y, X) :- X >= Y, !.
+       max(X, Y, Y). % Asume que si no paso la primera regla, Y es el mayor. Pero si X >= Y y pedimos mas soluciones quitando el corte, fallaria.
+       ```
+
+---
+
+## 20. Optimización de CSP en Prolog: Generate-and-Test vs Constrain-and-Generate
+
+Para resolver problemas de restricciones eficientemente:
+- **Generate-and-Test (Malo)**: Genera todas las variables y luego aplica las restricciones. Complejidad exponencial masiva.
+  - *Fórmula*: `colorear(A, B) :- color(A), color(B), A \= B.`
+- **Constrain-and-Generate / Forward Checking (Bueno)**: Intercala restricciones en medio del proceso de generación para podar ramas inmediatamente.
+  - *Fórmula*: `colorear(A, B) :- color(A), A \= B, color(B).`
+- **CLP (Constraint Logic Programming)**: Extensiones de Prolog (como `library(clpfd)`) que resuelven restricciones sobre dominios finitos usando propagación matemática avanzada en lugar de simple backtracking de fuerza bruta.
+
+---
+
+## 21. Ideas clave para estudiar
+
+- **CSP** significa buscar valores que satisfacen variables y restricciones de dominio.
+- Prolog resuelve muchos CSP con **backtracking** nativo.
+- El orden de las restricciones afecta el rendimiento: validar restricciones temprano permite podar ramas del árbol de búsqueda.
+- El operador **Corte (`!`)** detiene el backtracking. Un **corte verde** solo optimiza; un **corte rojo** altera la semántica lógica.
+- **Datalog** sacrifica expresividad (elimina functores y listas) para garantizar terminación polinomial.
+- Las variables en Datalog deben ser **seguras** (aparecer en literales positivos del cuerpo) para evitar conjuntos infinitos.
+- La negación en Datalog requiere **estratificación** para evitar ciclos de dependencia con negación.
+- **EDB** (Extensional) son tablas físicas de hechos; **IDB** (Intensional) son vistas deducidas mediante reglas.

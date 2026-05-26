@@ -520,17 +520,68 @@ porque `Y` aparece en la cabeza, pero no en el cuerpo.
 
 Estas restricciones reducen expresividad, pero permiten garantizar decidibilidad y terminacion en muchos casos.
 
+---
+
+## El Algoritmo de Unificación (Martelli-Montanari)
+
+Para unificar formalmente dos términos, se mantiene un conjunto de ecuaciones $E = \{s_1 \doteq t_1, \ldots, s_n \doteq t_n\}$ y se aplican las siguientes reglas de simplificación de forma iterativa hasta que no se puedan aplicar más:
+
+1. **Delete (Borrado)**: $\{t \doteq t\} \cup E' \implies E'$
+2. **Decompose (Descomposición)**: $\{f(s_1, \ldots, s_k) \doteq f(t_1, \ldots, t_k)\} \cup E' \implies \{s_1 \doteq t_1, \ldots, s_k \doteq t_k\} \cup E'$
+   *(Si los functores principales difieren, o tienen distinta aridad, la unificación falla)*.
+3. **Conflict (Conflicto)**: $\{f(\ldots) \doteq g(\ldots)\} \cup E' \implies$ **Fallo de unificación**.
+4. **Swap (Intercambio)**: $\{t \doteq X\} \cup E' \implies \{X \doteq t\} \cup E'$ (donde $X$ es una variable y $t$ no es una variable).
+5. **Eliminate (Eliminación / Occurs Check)**: $\{X \doteq t\} \cup E' \implies \{X \doteq t\} \cup (E'[X \mapsto t])$
+   - *Condición 1*: $X$ no ocurre en $t$ (**Occurs Check**). Si $X$ ocurre en $t$ (ej: $X \doteq f(X)$), la unificación **falla**.
+   - *Condición 2*: $X$ debe ocurrir en $E'$.
+
+Cuando el conjunto de ecuaciones se encuentra en forma resuelta (todas las ecuaciones tienen la forma $X_i \doteq t_i$ y cada $X_i$ aparece exactamente una vez en el lado izquierdo), esa es la **Unificadora Más General (MGU)**.
+
+### El Occurs Check e infinitos en Prolog real
+En lógica formal, unificar una variable $X$ con un término compuesto que contiene a $X$ (ej: $X \doteq f(X)$) debe fallar porque un término finito no puede contenerse a sí mismo.
+- **Rendimiento histórico**: Verificar si $X$ está dentro de $t$ en cada unificación es costoso ($O(size(t))$). Por eso, Prolog clásico **omitió el Occurs Check** por defecto.
+- **Consecuencia**: Hacer `X = f(X)` en Prolog puede crear estructuras cíclicas o causar un desbordamiento de pila (Stack Overflow).
+- **SWI-Prolog moderno**: Admite términos cíclicos en algunas operaciones, pero si se requiere unificación pura según la lógica de primer orden, se debe usar:
+  ```prolog
+  ?- unify_with_occurs_check(X, f(X)).
+  false.
+  ```
+
+---
+
+## Búsqueda en Prolog: Depth-First Search (DFS) e Incompletitud
+
+Prolog utiliza una estrategia de búsqueda **Depth-First Search (DFS) con Backtracking** para recorrer el árbol de resolución.
+
+- **Ventaja**: Requiere muy poca memoria en comparación con Breadth-First Search (BFS). El espacio de memoria es proporcional a la profundidad máxima del árbol de búsqueda actual ($O(d)$).
+- **Desventaja (Incompletitud)**: Si el árbol de búsqueda contiene una rama infinita (un ciclo recursivo), DFS puede entrar en ella y quedarse atrapado para siempre, incluso si existe una solución válida en otra rama más a la derecha.
+
+```text
+       Consulta Inicial: reach(a, Y)
+            /                 \
+    [Rama Cíclica]         [Rama Solución]
+     reach(Y, Z)             reach(a, a)
+          |                       |
+     reach(Y', Z')              Y = a (Éxito)
+          |
+         ... (Loop infinito, DFS nunca llega a la derecha)
+```
+
+Por lo tanto, Prolog se considera **incompleto** como demostrador de teoremas: no siempre encuentra una prueba que lógicamente existe.
+
+---
+
 ## Ideas clave para estudiar
 
-- Prolog combina una vision **declarativa** y una **procedimental**.
-- La **unificacion** es el mecanismo fundamental de ejecucion.
-- El **modus ponens universal** explica formalmente como se hacen deducciones a partir de reglas.
-- Un programa se compone de **clausulas** y se ejecuta a partir de **consultas**.
-- Los **hechos** son clausulas sin cuerpo; las **reglas** reducen una meta a nuevas submetas.
-- El **resolvent** es el conjunto actual de metas pendientes.
-- Una **reduccion** reemplaza una meta por el cuerpo de una regla aplicable.
-- El **arbol de prueba** ayuda a visualizar como se construye una deduccion.
-- El **orden** de reglas y metas en Prolog afecta terminacion y eficiencia.
-- El significado `M(P)` de un programa es el conjunto de metas ground deducibles.
-- Un programa ideal es **correcto** y **completo** con respecto a su significado intencional.
-- Datalog es una variante mas restringida, pero con mejores garantias teoricas.
+- Prolog combina una vision **declarativa** (lógica) y una **procedimental** (control/ejecución).
+- La **unificacion** es el mecanismo fundamental de enlace de variables usando el algoritmo de Martelli-Montanari.
+- El **Occurs Check** evita que una variable se unifique con un término que la contiene. En Prolog clásico se omite por eficiencia, pero puede causar ciclos infinitos.
+- El **modus ponens universal** explica formalmente como se hacen deducciones a partir de reglas generalizadas.
+- Un programa se compone de **clausulas** (hechos y reglas) y se ejecuta a partir de **consultas**.
+- El **resolvent** es la lista actual de submetas pendientes de probar.
+- Una **reduccion** reemplaza una submeta por el cuerpo de una regla unificada.
+- El **arbol de prueba** (SLD resolution tree) representa el espacio de búsqueda.
+- Prolog recorre el árbol de prueba usando **DFS con Backtracking**, lo que lo hace eficiente en memoria pero **incompleto** ante ramas infinitas.
+- El significado `M(P)` de un programa es el conjunto de todas las metas ground lógicamente deducibles.
+- Un programa es **correcto** si no deduce falsedades, y **completo** si deduce todas las verdades deseadas.
+- Datalog es una variante sin functores de aridad $>0$, lo que garantiza que el espacio de búsqueda sea finito y que todas las consultas terminen.

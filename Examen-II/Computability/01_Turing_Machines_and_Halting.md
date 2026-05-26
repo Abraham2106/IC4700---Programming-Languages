@@ -283,13 +283,86 @@ o:
 - menos poder
 - mas control teorico
 
-## 17. Ideas clave para estudiar
+## 17. Definicion Formal de una Maquina de Turing
+
+Formalmente, una Maquina de Turing (TM) se define como una 7-tupla:
+
+$$M = (Q, \Sigma, \Gamma, \delta, q_0, q_{accept}, q_{reject})$$
+
+Donde:
+1. $Q$ es un conjunto finito de **estados**.
+2. $\Sigma$ es el **alfabeto de entrada** (no contiene el simbolo en blanco $\sqcup$).
+3. $\Gamma$ es el **alfabeto de la cinta**, donde $\Sigma \subset \Gamma$ y $\sqcup \in \Gamma$.
+4. $\delta$ es la **funcion de transicion**: $\delta: Q \times \Gamma \to Q \times \Gamma \times \{L, R\}$ (donde $L$ representa mover a la izquierda y $R$ mover a la derecha).
+5. $q_0 \in Q$ es el **estado inicial**.
+6. $q_{accept} \in Q$ es el **estado de aceptacion**.
+7. $q_{reject} \in Q$ es el **estado de rechazo**, con $q_{reject} \neq q_{accept}$.
+
+---
+
+## 18. Tesis de Church-Turing
+
+La **Tesis de Church-Turing** establece que nuestra nocion intuitiva de algoritmo (o calculabilidad) es exactamente equivalente a lo que puede ser computado por una Maquina de Turing.
+
+- **Implicacion**: Si un problema no puede ser resuelto por una Maquina de Turing, entonces no existe ningun algoritmo (en ningun lenguaje de programacion presente o futuro) que pueda resolverlo.
+- **Universalidad**: Cualquier modelo razonable de computacion (lambda calculo, funciones recursivas $\mu$, computadores modernos, etc.) tiene exactamente el mismo poder computacional que una Maquina de Turing.
+
+---
+
+## 19. Jerarquia de Lenguajes (R vs RE)
+
+Visualizacion de las clases de lenguajes segun decidibilidad y reconocibilidad:
+
+```text
++-------------------------------------------------------+
+| Lenguajes No Reconocibles (ej: complementario de ATM) |
+|   +-----------------------------------------------+   |
+|   | Reconocibles / Turing-Recognizable (RE)       |   |
+|   | (ej: ATM, HALT)                               |   |
+|   |   +---------------------------------------+   |   |
+|   |   | Decidibles / Decidable (R)            |   |   |
+|   |   | (ej: Lenguajes Regulares, CFLs)       |   |   |
+|   |   +---------------------------------------+   |   |
+|   +-----------------------------------------------+   |
++-------------------------------------------------------+
+```
+
+### Tabla de Comportamiento:
+| Clase de Lenguaje | Entrada pertenece al Lenguaje ($w \in L$) | Entrada NO pertenece al Lenguaje ($w \notin L$) |
+| :--- | :--- | :--- |
+| **Decidible (R)** | La TM siempre se detiene en $q_{accept}$. | La TM siempre se detiene en $q_{reject}$. |
+| **Reconocible (RE)** | La TM eventualmente se detiene en $q_{accept}$. | La TM puede detenerse en $q_{reject}$ o entrar en un ciclo infinito. |
+
+---
+
+## 20. Probar Indecidibilidad mediante Reducciones
+
+Para demostrar que un nuevo problema $B$ es indecidible:
+1. Tomamos un problema $A$ que ya sabemos que es indecidible (como $A_{TM}$ o $HALT_{TM}$).
+2. Suponemos por contradiccion que existe un decisor $M_B$ para el problema $B$.
+3. Construimos un decisor $M_A$ para el problema $A$ que utiliza a $M_B$ como subrutina.
+4. Como sabemos que $A$ es indecidible, la existencia de $M_A$ es una contradiccion.
+5. Por lo tanto, el decisor $M_B$ no puede existir y el problema $B$ es indecidible.
+
+Esta relacion de reduccion se escribe como:
+
+$$A \le_m B \quad (\text{"A se reduce por mapeo a B"})$$
+
+**Regla de Oro de las Reducciones**:
+- Si $A \le_m B$ y $A$ es indecidible $\implies B$ es indecidible.
+- Si $A \le_m B$ y $B$ es decidible $\implies A$ es decidible.
+
+---
+
+## 21. Ideas clave para estudiar
 
 - una TM puede aceptar, rechazar o entrar en loop
-- `RE` y `R` no son lo mismo
-- la maquina universal simula otras maquinas
-- `ATM` es reconocible pero no decidible
-- `HALT` es reconocible pero no decidible
-- la contradiccion surge de autorreferencia mas negacion
-- Turing universal significa poder simular cualquier TM
-- algunos lenguajes no deben ser Turing universales si se buscan garantias fuertes
+- `RE` (Turing-reconocible) y `R` (Turing-decidible) no son lo mismo. En `R` la maquina siempre termina.
+- la maquina universal (`UTM`) simula a otras maquinas de Turing recibiendo su descripcion y entrada.
+- `ATM` es reconocible pero no decidible.
+- `HALT` es reconocible pero no decidible.
+- la contradiccion surge de autorreferencia mas negacion (diagonalizacion).
+- Turing universal significa poder simular cualquier TM.
+- algunos lenguajes no deben ser Turing universales si se buscan garantias fuertes (ej: Datalog, SQL, regex).
+- **Reduccion**: Es usar una solucion de un problema $B$ para resolver $A$. Si $A$ es imposible y $A$ se reduce a $B$, entonces $B$ es imposible.
+- **Tesis de Church-Turing**: El limite de lo computable de forma algoritmica coincide con lo que puede resolver una maquina de Turing.

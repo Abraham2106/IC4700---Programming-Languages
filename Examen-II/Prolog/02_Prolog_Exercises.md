@@ -408,12 +408,141 @@ Para la base de conocimiento del ejercicio anterior, escriba un analisis corto r
 3. Que consultas podrian generar varias respuestas?
 4. En que casos aparece backtracking?
 
-## Sugerencia de estudio
-
-Una buena forma de practicar es resolver los ejercicios en este orden:
-
-1. Parte 1 y Parte 2
-2. Parte 3 y Parte 4
-3. Parte 5 y Parte 6
-4. Parte 7 y Parte 8
 5. Parte 9 y el reto integrador
+
+---
+
+# Solucionario Detallado (Guía de Respuestas)
+
+## Parte 1. Sintaxis y estructura
+
+### Ejercicio 1
+1. `X`: **Variable** (empieza con mayúscula).
+2. `alice`: **Constante** (átomo que empieza con minúscula, aridad 0).
+3. `parent(alice, bob)`: **Término compuesto** (functor `parent` con dos argumentos constantes).
+4. `parent(X)`: **Término compuesto** (functor `parent` con un argumento variable).
+5. `f(g(alice), Y)`: **Término compuesto** (functor principal `f` de aridad 2, sus argumentos son otro término compuesto `g(alice)` y una variable `Y`).
+6. `mother(sarah, isaac)`: **Término compuesto**.
+7. `child(alice, bob, carol)` (con `child/2` declarado): **Expresión mal formada** (violación de aridad).
+8. `[H|T]`: **Término compuesto** (representación de lista con constructor de lista `[\|]`).
+
+### Ejercicio 2
+1. `edge(alice, bob)`: **Sí respeta** (aridad 2).
+2. `edge(alice)`: **No respeta** (espera 2, recibe 1).
+3. `male(lot)`: **Sí respeta** (aridad 1).
+4. `male(lot, haran)`: **No respeta** (espera 1, recibe 2).
+5. `append([a], [b], [a,b])`: **Sí respeta** (aridad 3).
+6. `append([a], [b])`: **No respeta** (espera 3, recibe 2).
+
+### Ejercicio 3
+Un término es **ground** si no contiene variables.
+1. `alice`: **Ground**.
+2. `f(X)`: **No ground** (contiene `X`).
+3. `pair(alice, bob)`: **Ground**.
+4. `parent(X, bob)`: **No ground** (contiene `X`).
+5. `append([], [a], [a])`: **Ground**.
+6. `[X, bob]`: **No ground** (contiene `X`).
+
+---
+
+## Parte 2. Unificacion
+
+### Ejercicio 4
+1. `f(X)` y `f(alice)` $\implies$ **Unifican** con MGU $\sigma = \{ X \mapsto alice \}$.
+2. `pair(X, bob)` y `pair(alice, Y)` $\implies$ **Unifican** con MGU $\sigma = \{ X \mapsto alice, Y \mapsto bob \}$.
+3. `g(X, X)` y `g(alice, bob)` $\implies$ **No unifican** (requeriría $\{ X \mapsto alice \}$ y $\{ X \mapsto bob \}$, lo cual entra en conflicto porque una variable no puede tomar dos valores distintos en una misma sustitución).
+4. `parent(X, Y)` y `parent(alice, bob)` $\implies$ **Unifican** con MGU $\sigma = \{ X \mapsto alice, Y \mapsto bob \}$.
+5. `father(X, X)` y `father(alice, bob)` $\implies$ **No unifican** (conflicto $X \mapsto alice$ y $X \mapsto bob$).
+6. `[H|T]` y `[alice, bob]` $\implies$ **Unifican** con MGU $\sigma = \{ H \mapsto alice, T \mapsto [bob] \}$.
+
+### Ejercicio 5
+1. `f(X)` con `g(X)`: Falla porque los **functores principales** son distintos (`f` vs `g`).
+2. `parent(alice)` con `parent(alice, bob)`: Falla porque los términos tienen **distinta aridad** (1 vs 2).
+3. `pair(X, X)` con `pair(alice, bob)`: Falla porque `X` no puede unificarse simultáneamente con dos constantes distintas (`alice` y `bob`).
+4. `mother(sarah, X)` con `father(sarah, isaac)`: Falla por functores principales distintos (`mother` vs `father`).
+
+---
+
+## Parte 3 y 4. Hechos, Reglas y Trazas
+
+### Ejercicio 11. Traza del Resolvent para `?- son(lot, haran).`
+1. **Resolvent Inicial**: `[ son(lot, haran) ]` con $\theta = \{\}$
+2. **Paso 1**: Buscar cabeza de regla que unifique con `son(lot, haran)`.
+   - Se usa la regla `son(X, Y) :- parent(Y, X), male(X).`
+   - Unificación: $\sigma_1 = \{ X \mapsto lot, Y \mapsto haran \}$.
+   - Reemplazar por el cuerpo de la regla:
+   - **Nuevo Resolvent**: `[ parent(haran, lot), male(lot) ]`
+3. **Paso 2**: Resolver la meta de la izquierda: `parent(haran, lot)`.
+   - Regla aplicable: `parent(A, B) :- father(A, B).`
+   - Unificación: $\{ A \mapsto haran, B \mapsto lot \}$.
+   - **Nuevo Resolvent**: `[ father(haran, lot), male(lot) ]`
+4. **Paso 3**: Resolver `father(haran, lot)`.
+   - Hay un hecho ground en la base de conocimientos: `father(haran, lot).`
+   - Unificación: vacía.
+   - **Nuevo Resolvent**: `[ male(lot) ]`
+5. **Paso 4**: Resolver `male(lot)`.
+   - Hay un hecho ground: `male(lot).`
+   - Unificación: vacía.
+   - **Nuevo Resolvent**: `[]` (Vacío) $\implies$ **Éxito / True**.
+
+---
+
+## Parte 5. Listas y recursion
+
+### Ejercicio 15. Traza de `?- append([alice, bob], [carol], Z).`
+- **Paso 1**: Unifica con la segunda regla `append([H|T], Y, [H|U]) :- append(T, Y, U).`
+  - $\{ H \mapsto alice, T \mapsto [bob], Y \mapsto [carol], Z \mapsto [alice | U] \}$
+  - Meta recursiva: `?- append([bob], [carol], U).`
+- **Paso 2**: Unifica de nuevo con la segunda regla:
+  - $\{ H' \mapsto bob, T' \mapsto [], Y' \mapsto [carol], U \mapsto [bob | U'] \}$
+  - Meta recursiva: `?- append([], [carol], U').`
+- **Paso 3**: Unifica con la primera regla (caso base) `append([], Y, Y).`
+  - $\{ U' \mapsto [carol] \}$
+- **Reconstrucción**:
+  - $U = [bob | U'] = [bob, carol]$
+  - $Z = [alice | U] = [alice, bob, carol]$
+  - Respuesta: `Z = [alice, bob, carol].`
+
+### Ejercicio 17. Definición de `member/2`
+```prolog
+member(X, [X|_]).
+member(X, [_|T]) :- member(X, T).
+```
+
+---
+
+## Parte 9. Programación (Código Solución)
+
+### Ejercicio 30. `sibling/2`
+```prolog
+sibling(X, Y) :-
+    parent(P, X),
+    parent(P, Y),
+    X \= Y.
+```
+
+### Ejercicio 31. `ancestor/2`
+```prolog
+% Caso base: progenitor directo
+ancestor(X, Y) :- parent(X, Y).
+% Caso recursivo
+ancestor(X, Y) :- parent(X, Z), ancestor(Z, Y).
+```
+
+### Ejercicio 32. `len/2`
+```prolog
+len([], 0).
+len([_|T], N) :- len(T, M), N is M + 1.
+```
+
+### Ejercicio 33. `last_elem/2`
+```prolog
+last_elem([X], X).
+last_elem([_|T], X) :- last_elem(T, X).
+```
+
+### Ejercicio 34. `prefix/2` y Ejercicio 35. `suffix/2`
+```prolog
+prefix(P, L) :- append(P, _, L).
+suffix(S, L) :- append(_, S, L).
+```

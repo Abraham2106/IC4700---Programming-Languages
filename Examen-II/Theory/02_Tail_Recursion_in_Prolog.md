@@ -19,6 +19,8 @@ Eso significa:
 
 En esos casos, muchos sistemas pueden reutilizar el frame actual y evitar crecimiento innecesario de pila.
 
+La intuicion operacional es simple: si no queda nada por hacer despues de volver de la llamada recursiva, entonces no hace falta retener tanto contexto pendiente.
+
 La intuicion operacional es:
 
 - si no queda nada por hacer despues de volver de la recursion
@@ -45,6 +47,8 @@ En Prolog esto es especialmente comun porque muchos predicados sobre listas sigu
 - seguir con la cola
 
 Ese "estado parcial" suele convertirse en el acumulador.
+
+Por eso los acumuladores aparecen tanto en predicados sobre listas: permiten convertir una definicion elegante pero costosa en una definicion mas cercana a un recorrido iterativo.
 
 ## 3. Version no optimizada de invertir
 
@@ -86,6 +90,8 @@ invierte([H|T], Acc, R) :-
     invierte(T, [H|Acc], R).
 ```
 
+Aqui `[H|Acc]` no recorre la lista acumulada. Solo construye una nueva cabeza cuyo resto es `Acc`, y eso ayuda a que la transformacion sea eficiente.
+
 ## 5. Explicacion
 
 La idea es:
@@ -102,6 +108,8 @@ Esto evita una operacion costosa muy comun en versiones no optimizadas: reconstr
 
 En la version no de cola, cada nivel espera el resultado de abajo para hacer algo mas.
 En la version de cola, cada nivel deja el trabajo ya adelantado antes de bajar.
+
+Esa es exactamente la idea del acumulador: mover trabajo desde "despues del retorno" hacia "antes de la llamada recursiva".
 
 ## 6. Consulta esperada
 
@@ -168,6 +176,8 @@ la llamada recursiva es lo ultimo que ocurre.
 
 No queda ninguna meta despues.
 
+En Prolog, una manera muy practica de reconocerlo es mirar si la llamada recursiva aparece como la ultima meta del cuerpo.
+
 Ese detalle es exactamente el criterio importante.
 
 Compare:
@@ -203,6 +213,8 @@ predicado([H|T], Acc, R) :-
     predicado(T, NuevoAcc, R).
 ```
 
+En muchos casos `NuevoAcc` ni siquiera necesita una variable intermedia; puede construirse directamente en la llamada recursiva.
+
 ## 10. Cuando conviene
 
 Conviene especialmente cuando:
@@ -227,6 +239,8 @@ Version de cola:
 - actualiza acumulador
 - sigue
 
+Procedimentalmente, esta segunda forma expresa mucho mejor la idea de "recorrer una estructura llevando estado parcial".
+
 ## 12. Ideas clave para estudiar
 
 - recursion de cola significa que no queda trabajo pendiente
@@ -242,3 +256,22 @@ Sin entrar en una prueba formal de complejidad, la intuicion es:
 - la version con acumulador hace solo inserciones al frente
 
 Por eso la segunda suele comportarse mejor en la practica.
+
+## 14. Otro ejemplo corto
+
+El mismo patron aparece en suma de listas:
+
+```prolog
+suma(L, S) :-
+    suma(L, 0, S).
+
+suma([], Acc, Acc).
+suma([H|T], Acc, S) :-
+    NuevoAcc is Acc + H,
+    suma(T, NuevoAcc, S).
+```
+
+La idea es la misma:
+
+- el caso base retorna el acumulador
+- el caso recursivo actualiza el acumulador y continua

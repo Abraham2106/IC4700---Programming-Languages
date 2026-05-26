@@ -335,13 +335,97 @@ Por eso OTP se centra en:
 - reinicio
 - aislamiento
 
-## 18. Ideas clave para estudiar
+---
 
-- fail-fast significa fallar rapido y visiblemente
-- los process pairs aportan redundancia
-- los supervision trees estructuran la recuperacion
-- `one_for_one`, `one_for_all` y `rest_for_one` tienen usos distintos
-- MTBF mide el tiempo promedio entre fallos
-- reducir MTTR mejora disponibilidad
-- los Heisenbugs son especialmente peligrosos en concurrencia
-- OTP mejora la confiabilidad al aislar procesos y reiniciarlos automaticamente
+## 18. Ejemplo de Código en Erlang: Concurrencia y Mensajería Básica
+
+A continuación, un módulo simple que demuestra cómo se crean procesos en Erlang, cómo envían mensajes y cómo se reciben:
+
+```erlang
+-module(pingpong).
+-export([start/0, loop/0]).
+
+start() ->
+    % Spawnea el proceso receptor
+    Pid = spawn(pingpong, loop, []),
+    % Envia un mensaje al proceso receptor
+    Pid ! {self(), ping},
+    % Espera la respuesta
+    receive
+        pong ->
+            io:format("Recibido: pong!~n")
+    after 5000 ->
+        io:format("Timeout esperando respuesta~n")
+    end.
+
+loop() ->
+    receive
+        {From, ping} ->
+            io:format("Recibido: ping. Respondiendo...~n"),
+            From ! pong,
+            loop(); % Llamada recursiva (de cola) para mantener vivo el proceso
+        stop ->
+            ok
+    end.
+```
+
+---
+
+## 19. Ejemplo de Código en Erlang: Atrapando Señales de Salida (Trap Exit)
+
+Por defecto, si un proceso enlazado muere, mata a todos los procesos enlazados a él. Para evitar esto (que es cómo trabajan los supervisores), se atrapan las señales de salida:
+
+```erlang
+-module(supervisor_demo).
+-export([start/0, worker/0]).
+
+start() ->
+    % Activa atrapar salidas en el proceso actual (supervisor)
+    process_flag(trap_exit, true),
+    
+    % Spawnea y enlaza al worker en un solo paso atomico
+    WorkerPid = spawn_link(supervisor_demo, worker, []),
+    io:format("Worker iniciado con Pid: ~p~n", [WorkerPid]),
+    
+    % Envia mensaje para que muera
+    WorkerPid ! crash,
+    
+    % Recibe la senial de salida como si fuera un mensaje normal
+    receive
+        {'EXIT', WorkerPid, Reason} ->
+            io:format("Supervisor detecto caida de ~p con razon: ~p. Reiniciando...~n", [WorkerPid, Reason]),
+            % Aqui se reiniciaria el proceso en un sistema real
+            start()
+    end.
+
+worker() ->
+    receive
+        crash ->
+            exit(bad_state) % Fuerza la muerte del proceso
+    end.
+```
+
+---
+
+## 20. Procesos de Erlang vs Procesos de Sistema Operativo
+
+| Caracteristica | Procesos de Erlang | Procesos del Sistema Operativo (OS) |
+| :--- | :--- | :--- |
+| **Peso / Memoria** | **Ultra livianos**: ~300 palabras de memoria por proceso. Se pueden tener millones de ellos. | **Pesados**: Requieren al menos megabytes para pilas de ejecución y descriptores. |
+| **Creacion** | **Instantánea**: Ocurre enteramente dentro del espacio de usuario en la máquina virtual (BEAM). | **Lenta**: Requiere llamadas al sistema (`fork`/`clone`), asignación de páginas y contexto. |
+| **Planificacion** | **Preemptiva en BEAM**: La VM decide el turno de cada proceso basándose en reducciones (llamadas a funciones). | **Planificación del OS**: Hilos planificados por el kernel del sistema operativo. |
+| **Comunicacion** | **Paso de mensajes sin copia** (o copia en heap local). Aislamiento absoluto de memoria. | Memoria compartida con cerrojos (locks/mutex) o IPC costoso (sockets, pipes). |
+
+---
+
+## 21. Ideas clave para estudiar
+
+- **fail-fast** significa fallar rapido y visiblemente para evitar la propagacion de estados corruptos.
+- los **process pairs** aportan redundancia (uno primario activo, uno secundario en espera).
+- los **supervision trees** estructuran la jerarquia de recuperacion (supervisores y workers).
+- **one_for_one**, **one_for_all** y **rest_for_one** tienen usos distintos segun el grado de independencia de los hijos.
+- **MTBF** mide el tiempo promedio entre fallos; **MTTR** mide el tiempo promedio de recuperacion.
+- reducir **MTTR** (con reinicios automaticos rapidos) mejora exponencialmente la **disponibilidad**.
+- los **Heisenbugs** son especialmente peligrosos en concurrencia (no deterministas).
+- OTP mejora la confiabilidad al aislar procesos sin memoria compartida y reiniciarlos automaticamente mediante la captura de señales `EXIT`.
+- Los procesos de Erlang son gestionados completamente por la **BEAM VM**, lo que los hace extremadamente eficientes y rápidos de crear/destruir comparados con los del OS.

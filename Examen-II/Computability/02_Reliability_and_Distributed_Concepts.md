@@ -196,36 +196,64 @@ Por eso, en la practica, aumentar disponibilidad implica combinar:
 - `MTBF` alto
 - `MTTR` bajo
 
-## 14. Respuestas cortas para examen
+## 14. Enlaces (Links) vs Monitores (Monitors) en Erlang
+
+Para implementar la supervision, Erlang provee dos primitivas basicas de deteccion de fallos:
+
+| Caracteristica | Enlaces (`link/1`) | Monitores (`monitor/2`) |
+| :--- | :--- | :--- |
+| **Direccionalidad** | **Bidireccional**: Si $A$ se enlaza a $B$, la falla de cualquiera afecta al otro. | **Unidireccional**: Si $A$ monitorea a $B$, solo $A$ se entera si $B$ falla. |
+| **Mecanismo** | Propaga señales de salida (`EXIT`). Si no se atrapan, matan al proceso enlazado. | Envia un mensaje normal de informacion `{'DOWN', Ref, process, Pid, Reason}` al buzon. |
+| **Uso principal** | Para agrupar procesos dependientes (ej: si muere el cliente, debe morir la transaccion). | Para vigilar procesos ajenos o independientes (ej: el supervisor vigila al worker). |
+| **Atrapado** | Requiere llamar a `process_flag(trap_exit, true)` para convertir señales `EXIT` en mensajes de buzon. | No requiere configuracion especial; la notificacion llega siempre como mensaje normal. |
+
+---
+
+## 15. Redundancia Activa vs Pasiva (Process Pairs)
+
+- **Redundancia Activa (Active Replication / Hot Standby)**: Todos los componentes procesan las mismas solicitudes simultaneamente. Si uno falla, los demas ya tienen el estado actualizado al instante. Es costoso en CPU/Red.
+- **Redundancia Pasiva (Passive / Warm/Cold Standby)**: Solo el primario procesa las solicitudes. El secundario recibe actualizaciones periodicas de estado (o log de transacciones) o simplemente espera inactivo hasta que se detecta la caida del primario. Es mas eficiente pero la transicion (failover) puede demorar.
+
+---
+
+## 16. La Filosofia "Let it Crash" (Deja que falle)
+
+En lugar de llenar el codigo con bloques `try-catch` defensivos tratando de anticipar cada posible error extraño (lo que a menudo oscurece la logica del negocio y propaga estados corruptos silenciosamente):
+1. **Escribir codigo solo para el camino feliz** (happy path).
+2. Si ocurre un error inesperado (como una division por cero o un formato de mensaje incorrecto), **dejar que el proceso muera de inmediato**.
+3. El supervisor (que esta enlazado o monitoreando al proceso) recibira la notificacion de la muerte del proceso y lo **reiniciara desde un estado limpio y bien definido**.
+
+---
+
+## 17. Respuestas cortas para examen
 
 ### Que son pares de procesos
-
 Dos procesos redundantes que ejecutan la misma tarea para que uno pueda reemplazar al otro si falla.
 
 ### Que son arboles de supervision
-
 Jerarquias de procesos donde supervisores monitorean hijos y los reinician segun politicas definidas.
 
 ### Que es fail-fast
-
 Principio de fallar de inmediato y visiblemente ante un estado invalido, en vez de continuar corruptamente.
 
 ### Que son Heisenbugs
-
-Bugs no reproducibles o muy sensibles a la observacion, comunmente asociados a concurrencia y timing.
+Bugs no reproducibles o muy sensibles a la observacion, comunmente asociados a concurrencia, timing y race conditions.
 
 ### Que son Eigenbugs
-
 Fallos que sobreviven las pruebas normales y aparecen por condiciones globales del estado del sistema o de la memoria, a menudo tras cierto tiempo de ejecucion y con comportamiento erratico.
 
 ### Que significa MTBF
-
 `Mean Time Between Failures`, tiempo promedio entre fallos.
 
-### Que condiciones aumentan confiabilidad
+### Que es "Let it Crash"
+Filosofia de desarrollo que propone no capturar errores inesperados localmente, sino dejar que el proceso muera y permitir que un supervisor lo reinicie desde un estado limpio.
 
-- aislamiento de fallos
-- redundancia
-- supervision y reinicio automatico
-- independencia entre procesos
-- estado minimo y recuperable
+### Que diferencia hay entre link y monitor
+El `link` es bidireccional y propaga señales de salida `EXIT`. El `monitor` es unidireccional y envia un mensaje normal `{'DOWN', ...}` al buzon del monitorizador.
+
+### Que condiciones aumentan confiabilidad
+- aislamiento de fallos (sin memoria compartida)
+- redundancia (process pairs, replicas)
+- supervision y reinicio automatico (MTTR bajo)
+- independencia entre procesos (sin dependencias ciclicas)
+- estado minimo y recuperable (para reinicios limpios)

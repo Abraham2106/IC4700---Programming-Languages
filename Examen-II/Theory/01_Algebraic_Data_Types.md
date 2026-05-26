@@ -22,6 +22,15 @@ Ejemplos:
 
 La intuicion es contar cuantas formas distintas hay de construir un valor.
 
+Esto no quiere decir que los tipos sean literalmente numeros, sino que su estructura se comporta de forma parecida a la aritmetica cuando los analizamos por habitantes y constructores.
+
+Por ejemplo:
+
+- un tipo suma agrega alternativas
+- un tipo producto combina elecciones
+- un tipo con un solo habitante se comporta como `1`
+- un tipo sin habitantes se comporta como `0`
+
 Esto no significa que los tipos sean literalmente numeros, sino que bajo ciertas condiciones podemos razonar sobre su estructura de una forma parecida a la aritmetica.
 
 La razon es esta:
@@ -61,6 +70,8 @@ Por eso se interpreta como:
 a + b
 ```
 
+Si `a` tiene `m` valores posibles y `b` tiene `n`, entonces `Either a b` tiene `m + n` valores posibles, porque los constructores `Left` y `Right` mantienen separadas las dos ramas.
+
 ## 3. Producto de tipos
 
 Un tipo producto representa que ambos componentes existen al mismo tiempo.
@@ -88,6 +99,8 @@ porque un valor del producto contiene:
 - un valor de `a`
 - y un valor de `b`
 
+Si `a` tiene `m` habitantes y `b` tiene `n`, entonces el producto tiene `m x n` habitantes, porque cada valor de `a` puede emparejarse con cada valor de `b`.
+
 ## 4. Isomorfismo de tipos
 
 Dos tipos `A` y `B` son isomorfos si existen funciones:
@@ -114,6 +127,8 @@ Esta ultima parte es importante: no basta con que dos tipos "se parezcan". Para 
 - sin ambiguedad
 
 Si una conversion comprime varios valores distintos en uno solo, entonces no hay isomorfismo.
+
+Ese punto es central: isomorfismo no es "se parecen" ni "tienen una intuicion parecida". Isomorfismo significa que se puede ir y volver sin perder informacion y sin introducir ambiguedad.
 
 ## 4.1. Por que importa el conteo de habitantes
 
@@ -295,6 +310,8 @@ Pero:
 
 Como `2 /= 4`, no pueden ser isomorfos en general.
 
+Este tipo de argumento por cardinalidad es muy util en examen porque permite descartar rapido falsos isomorfismos sin tener que intentar escribir funciones imposibles.
+
 ## 12. Intuicion del fallo
 
 En:
@@ -316,6 +333,8 @@ Muchas de esas combinaciones no corresponden a una unica forma natural de repres
 a + (b x c)
 ```
 
+En el lado derecho hay dos decisiones parciales independientes; en el izquierdo hay una sola decision global. Esa diferencia estructural explica por que no hay distributividad hacia ese lado.
+
 ## 13. Conexion con programacion
 
 Esto importa porque permite:
@@ -334,6 +353,8 @@ data Resultado = Exito Valor | Error Mensaje
 ```
 
 que con varios campos separados, porque el tipo suma hace explicitas las alternativas validas del sistema.
+
+Eso mejora mucho el diseño de APIs porque elimina estados imposibles desde el propio sistema de tipos.
 
 ## 14. Ideas clave para estudiar
 
