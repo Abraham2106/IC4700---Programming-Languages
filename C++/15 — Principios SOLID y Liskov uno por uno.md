@@ -68,6 +68,15 @@ public:
 ### 3. Liskov Substitution Principle (LSP)
 *“Si S es un subtipo de T, los objetos de tipo T en un programa pueden ser reemplazados por objetos de tipo S sin alterar ninguna de las propiedades deseables del programa.”*
 
+Liskov no habla solo de herencia sintáctica. Habla de contrato.
+Si una clase base promete cierto comportamiento, una clase derivada no puede:
+- Requerir más condiciones de entrada que la base.
+- Entregar menos de lo que la base promete.
+- Romper invariantes internas que el cliente espera conservar.
+- Sorprender al cliente con excepciones o efectos secundarios nuevos.
+
+En otras palabras, una subclase debe comportarse como una versión más específica de la base, no como un tipo “parecido” pero con reglas incompatibles.
+
 #### El Clásico Antipadrón: El Rectángulo y el Cuadrado
 Sintácticamente, un Cuadrado es un Rectángulo (tiene 4 lados y ángulos de 90 grados). Sin embargo, si heredamos `Cuadrado : public Rectangulo` e intentamos redefinir `set_ancho` y `set_alto`:
 
@@ -96,6 +105,33 @@ void redimensionar(Rectangulo& r) {
 }
 ```
 **Solución:** No heredar si las precondiciones o postcondiciones difieren. Usar composición o una base común inmutable (ej. `FiguraGeometrica`).
+
+#### Cómo Detectar una Violación de LSP
+Un buen indicio de violación es cuando el código cliente empieza a preguntar por el tipo real del objeto para “arreglar” el comportamiento.
+
+```cpp
+void imprimir_area(const Rectangulo& r) {
+    // Si el cliente necesita hacer ifs por tipo concreto, el modelo ya está oliendo mal.
+    std::cout << r.obtener_area() << "\n";
+}
+```
+
+Si una función necesita saber si recibió un `Rectangulo`, un `Cuadrado` o un derivado especial para decidir cómo actuar, la abstracción base no está siendo respetada.
+
+#### Precondiciones y Postcondiciones
+El contrato de Liskov se rompe fácilmente cuando una subclase endurece la entrada o debilita la salida:
+- Una base acepta cualquier entero, pero la derivada solo acepta positivos.
+- Una base garantiza que una operación no falla, pero la derivada puede lanzar una excepción extra.
+- Una base permite leer un valor estable, pero la derivada devuelve algo temporal o incompleto.
+
+Eso hace que el cliente escrito para la base deje de ser confiable cuando recibe una subclase.
+
+#### Regla Práctica
+Si necesitas escribir comentarios como “esta clase hereda de X, pero no se comporta exactamente como X”, probablemente no deberías usar herencia pública.
+En ese caso, suele ser mejor:
+- usar composición,
+- extraer una interfaz más pequeña,
+- o redefinir el modelo de dominio para que la base represente una abstracción real.
 
 ---
 
@@ -190,7 +226,7 @@ public:
 
 ---
 
-*Siguiente tema sugerido: [16 — Orden de Construcción y Destrucción (Depth)](<16 — Constructores en C++.md>)*
+*Siguiente tema sugerido: [16 — Orden de Construcción y Destrucción (Depth)](<16 — Orden de Construcción y Destrucción (Depth).md>)*
 
 
 
