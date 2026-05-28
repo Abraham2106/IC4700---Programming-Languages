@@ -193,6 +193,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [07 — Ámbito y Ciclo de Vida (Scope)](07 — Ámbito y Ciclo de Vida (Scope).md)*
+*Siguiente tema sugerido: [07 — Ámbito y Ciclo de Vida (Scope)](07 — Funciones y Operadores de Acceso.md)*
+
+
+
 
 

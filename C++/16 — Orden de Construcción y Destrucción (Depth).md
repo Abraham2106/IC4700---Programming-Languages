@@ -189,6 +189,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [17 — Constructores en C++](<17 — Constructores en C++.md>)*
+*Siguiente tema sugerido: [17 — Constructores en C++](<17 — Construcción por Copia y Movimiento.md>)*
+
+
+
 
 

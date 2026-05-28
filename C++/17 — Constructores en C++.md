@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Los constructores son funciones especiales de miembro dedicadas a inicializar el estado de los objetos de una clase. C++ ofrece múltiples tipos de constructores, cada uno con reglas de síntesis y sobrecargas específicas indispensables para un control de ciclo de vida seguro.
 >
-> **Prerrequisitos:** Haber leído [16 — Orden de Construcción y Destrucción (Depth)](<16 — Orden de Construcción y Destrucción (Depth).md>).
+> **Prerrequisitos:** Haber leído [16 — Orden de Construcción y Destrucción (Depth)](<16 — Constructores en C++.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -191,6 +191,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [18 — Construcción por Copia y Movimiento](<18 — Construcción por Copia y Movimiento.md>)*
+*Siguiente tema sugerido: [18 — Construcción por Copia y Movimiento](<18 — Gestión de Memoria Stack vs Heap.md>)*
+
+
+
 
 

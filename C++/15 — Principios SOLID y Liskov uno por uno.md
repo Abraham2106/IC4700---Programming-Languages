@@ -190,6 +190,9 @@ public:
 
 ---
 
-*Siguiente tema sugerido: [16 — Orden de Construcción y Destrucción (Depth)](<16 — Orden de Construcción y Destrucción (Depth).md>)*
+*Siguiente tema sugerido: [16 — Orden de Construcción y Destrucción (Depth)](<16 — Constructores en C++.md>)*
+
+
+
 
 

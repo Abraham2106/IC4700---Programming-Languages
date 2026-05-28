@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Los punteros son variables que almacenan direcciones de memoria. Entender los punteros es la clave para dominar el bajo nivel, la aritmética de direcciones, la manipulación de arreglos y la alocación dinámica de memoria.
 >
-> **Prerrequisitos:** Haber leído [01 — Diferencias entre C, C++ y Rust](<C vs C++ vs Rust.md>).
+> **Prerrequisitos:** Haber leído [01 — Diferencias entre C, C++ y Rust](<01 — Diferencias entre C, C++ y Rust.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -176,5 +176,8 @@ int main() {
 ---
 
 *Siguiente tema sugerido: [05 — Referencias en C++](<05 — Referencias en C++.md>)*
+
+
+
 
 

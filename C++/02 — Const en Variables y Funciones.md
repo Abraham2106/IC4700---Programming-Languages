@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** El uso de `const` en C++ es un contrato de inmutabilidad en tiempo de compilación. Entender sus matices sobre variables, punteros, referencias y métodos es fundamental para escribir código seguro, optimizable y con correctitud de const (const correctness).
 >
-> **Prerrequisitos:** Haber leído [01 — Diferencias entre C, C++ y Rust](<C vs C++ vs Rust.md>).
+> **Prerrequisitos:** Haber leído [01 — Diferencias entre C, C++ y Rust](<01 — Diferencias entre C, C++ y Rust.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -173,5 +173,8 @@ void imprimir_inventario(Inventario& inv) {
 ---
 
 *Siguiente tema sugerido: [03 — La Directiva #define y Macros](<03 — La Directiva #define y Macros.md>)*
+
+
+
 
 

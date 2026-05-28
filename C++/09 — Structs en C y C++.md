@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Aunque las estructuras (`struct`) existen tanto en C como en C++, su definición y capacidades cambiaron radicalmente entre lenguajes. En C, un `struct` es solo una agrupación pasiva de datos agregados; en C++, es una clase hecha y derecha con la única diferencia de su visibilidad por defecto.
 >
-> **Prerrequisitos:** Haber leído [08 — Funciones y Operadores de Acceso](<08 — Funciones y Operadores de Acceso.md>).
+> **Prerrequisitos:** Haber leído [08 — Funciones y Operadores de Acceso](<08 — Structs en C y C++.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -194,6 +194,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [10 — Global Scope y Objetos Globales](<10 — Global Scope y Objetos Globales.md>)*
+*Siguiente tema sugerido: [10 — Global Scope y Objetos Globales](<10 — Uniones y std::variant.md>)*
+
+
+
 
 

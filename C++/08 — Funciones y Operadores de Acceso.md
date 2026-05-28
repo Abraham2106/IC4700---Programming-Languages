@@ -192,6 +192,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [09 — Structs en C y C++](<09 — Structs en C y C++.md>)*
+*Siguiente tema sugerido: [09 — Structs en C y C++](<09 — Global Scope y Objetos Globales.md>)*
+
+
+
 
 

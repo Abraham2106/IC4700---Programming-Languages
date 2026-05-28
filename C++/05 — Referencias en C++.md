@@ -176,6 +176,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [06 — Wrappers y Gestión de Recursos (RAII)](06 — Wrappers y Gestión de Recursos (RAII).md)*
+*Siguiente tema sugerido: [06 — Wrappers y Gestión de Recursos (RAII)](06 — Ámbito y Ciclo de Vida (Scope).md)*
+
+
+
 
 

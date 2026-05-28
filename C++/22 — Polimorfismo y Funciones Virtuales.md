@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** El polimorfismo dinámico es el mecanismo por el que una llamada a través de un puntero o referencia de clase base puede invocar en tiempo de ejecución la implementación correcta de la clase derivada. Se implementa mediante funciones virtuales y la tabla de dispatch virtual (vtable), el único mecanismo de overhead de runtime que C++ introduce en la OOP.
 >
-> **Prerrequisitos:** Haber leído [12 — Herencia y Visibilidad](<12 — Herencia y Visibilidad.md>) y [16 — Orden de Construcción y Destrucción (Depth)](<16 — Orden de Construcción y Destrucción (Depth).md>).
+> **Prerrequisitos:** Haber leído [12 — Herencia y Visibilidad](<12 — Herencia y Visibilidad.md>) y [16 — Orden de Construcción y Destrucción (Depth)](<16 — Constructores en C++.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -437,6 +437,9 @@ class Mala : public Base {
 
 *Has completado el módulo final de esta serie. Felicitaciones.*
 
-*Para profundizar más: Revisar [01 — Diferencias entre C, C++ y Rust](<C vs C++ vs Rust.md>) con los nuevos conocimientos adquiridos para ver cómo estos mecanismos de bajo nivel diferencian filosóficamente a C++ de Rust y C.*
+*Para profundizar más: Revisar [01 — Diferencias entre C, C++ y Rust](<01 — Diferencias entre C, C++ y Rust.md>) con los nuevos conocimientos adquiridos para ver cómo estos mecanismos de bajo nivel diferencian filosóficamente a C++ de Rust y C.*
+
+
+
 
 

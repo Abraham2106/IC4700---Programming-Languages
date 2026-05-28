@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** La herencia en C++ permite extender la funcionalidad de clases existentes, modelando relaciones "es-un" (is-a). El control de acceso a los miembros heredados se define estrictamente mediante los calificadores de visibilidad (`public`, `protected`, `private`), protegiendo el encapsulamiento.
 >
-> **Prerrequisitos:** Haber leído [09 — Structs en C y C++](<09 — Structs en C y C++.md>).
+> **Prerrequisitos:** Haber leído [09 — Structs en C y C++](<09 — Global Scope y Objetos Globales.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -209,5 +209,8 @@ int main() {
 ---
 
 *Siguiente tema sugerido: [13 — Uniones y std::variant](<13 — Uniones y std::variant.md>)*
+
+
+
 
 

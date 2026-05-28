@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** La sobrecarga en C++ permite que múltiples funciones o constructores compartan el mismo nombre siempre que sus firmas de argumentos difieran. El compilador resuelve estáticamente qué función llamar en tiempo de compilación mediante el mecanismo de Name Mangling (decoración de nombres).
 >
-> **Prerrequisitos:** Haber leído [08 — Funciones y Operadores de Acceso](<08 — Funciones y Operadores de Acceso.md>).
+> **Prerrequisitos:** Haber leído [08 — Funciones y Operadores de Acceso](<08 — Structs en C y C++.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -197,5 +197,8 @@ int main() {
 ---
 
 *Siguiente tema sugerido: [12 — Herencia y Visibilidad](<12 — Herencia y Visibilidad.md>)*
+
+
+
 
 

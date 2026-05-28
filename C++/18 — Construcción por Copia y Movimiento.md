@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Controlar cómo se copian y mueven los objetos en C++ es crucial para evitar fugas de memoria y optimizar el rendimiento. La "Regla de los Tres/Cinco/Cero" define cuándo debemos programar manualmente los constructores de copia, movimiento y sus respectivos operadores de asignación.
 >
-> **Prerrequisitos:** Haber leído [05 — Referencias en C++](<05 — Referencias en C++.md>) y [17 — Constructores en C++](<17 — Constructores en C++.md>).
+> **Prerrequisitos:** Haber leído [05 — Referencias en C++](<05 — Referencias en C++.md>) y [17 — Constructores en C++](<17 — Construcción por Copia y Movimiento.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -180,6 +180,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [19 — Gestión de Memoria Stack vs Heap](<19 — Gestión de Memoria Stack vs Heap.md>)*
+*Siguiente tema sugerido: [19 — Gestión de Memoria Stack vs Heap](<19 — Operadores new y delete.md>)*
+
+
+
 
 

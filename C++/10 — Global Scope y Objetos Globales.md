@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Las variables y objetos globales en C++ residen en el ámbito global del programa y tienen un ciclo de vida estático. Aunque facilitan el acceso a datos compartidos, introducen graves problemas de acoplamiento, riesgos en entornos multi-hilo, y el temido "Fiasco del Orden de Inicialización Estática".
 >
-> **Prerrequisitos:** Haber leído [07 — Ámbito y Ciclo de Vida (Scope)](07 — Ámbito y Ciclo de Vida (Scope).md).
+> **Prerrequisitos:** Haber leído [07 — Ámbito y Ciclo de Vida (Scope)](07 — Funciones y Operadores de Acceso.md).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -202,5 +202,8 @@ int main() {
 ---
 
 *Siguiente tema sugerido: [11 — Sobrecarga (Overloading)](11 — Sobrecarga (Overloading).md)*
+
+
+
 
 

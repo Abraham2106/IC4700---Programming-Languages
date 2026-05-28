@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** `new` y `delete` son los operadores nativos de C++ para gestionar memoria dinámica en el Heap. A diferencia de `malloc` y `free` de C, estos operadores no solo alocan bytes crudos sino que invocan constructores y destructores de forma automática, garantizando la correctitud de los objetos de C++.
 >
-> **Prerrequisitos:** Haber leído [19 — Gestión de Memoria Stack vs Heap](<19 — Gestión de Memoria Stack vs Heap.md>).
+> **Prerrequisitos:** Haber leído [19 — Gestión de Memoria Stack vs Heap](<19 — Operadores new y delete.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -192,6 +192,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [21 — Sobrecarga de Operadores (operator)](21 — Sobrecarga de Operadores (operator).md)*
+*Siguiente tema sugerido: [21 — Sobrecarga de Operadores (operator)](21 — Polimorfismo y Funciones Virtuales.md)*
+
+
+
 
 

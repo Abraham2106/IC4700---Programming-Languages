@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** Las uniones en C y C++ permiten almacenar diferentes tipos de datos en la misma posición física de memoria RAM, optimizando el tamaño. C++ moderno introduce `std::variant`, una alternativa type-safe (unión etiquetada) que elimina la corrupción accidental de memoria.
 >
-> **Prerrequisitos:** Haber leído [09 — Structs en C y C++](<09 — Structs en C y C++.md>).
+> **Prerrequisitos:** Haber leído [09 — Structs en C y C++](<09 — Global Scope y Objetos Globales.md>).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -201,6 +201,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [14 — Herencia Privada y Composición](<14 — Herencia Privada y Composición.md>)*
+*Siguiente tema sugerido: [14 — Herencia Privada y Composición](<14 — Principios SOLID y Liskov uno por uno.md>)*
+
+
+
 
 

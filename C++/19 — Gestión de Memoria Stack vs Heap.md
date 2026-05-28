@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** La memoria RAM disponible para los programas en C++ se divide conceptualmente en dos regiones principales: el Stack (Pila) y el Heap (Montículo). Comprender sus diferencias operativas es crucial para balancear la velocidad, el tamaño de los datos y el control del ciclo de vida físico del software.
 >
-> **Prerrequisitos:** Haber leído [07 — Ámbito y Ciclo de Vida (Scope)](07 — Ámbito y Ciclo de Vida (Scope).md).
+> **Prerrequisitos:** Haber leído [07 — Ámbito y Ciclo de Vida (Scope)](07 — Funciones y Operadores de Acceso.md).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -167,6 +167,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [20 — Operadores new y delete](<20 — Operadores new y delete.md>)*
+*Siguiente tema sugerido: [20 — Operadores new y delete](<20 — Sobrecarga de Operadores (operator).md>)*
+
+
+
 
 

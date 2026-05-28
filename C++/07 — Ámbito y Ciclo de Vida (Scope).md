@@ -2,7 +2,7 @@
 
 > **Resumen Ejecutivo:** El ámbito (scope) define la visibilidad y accesibilidad de un identificador en el código, mientras que el ciclo de vida (lifetime) dicta el periodo en el que una variable tiene memoria asignada en el Stack, Heap o segmento estático. Controlar ambos es vital para evitar memory leaks y bugs de acceso no autorizado.
 >
-> **Prerrequisitos:** Haber leído [06 — Wrappers y Gestión de Recursos (RAII)](06 — Wrappers y Gestión de Recursos (RAII).md).
+> **Prerrequisitos:** Haber leído [06 — Wrappers y Gestión de Recursos (RAII)](06 — Ámbito y Ciclo de Vida (Scope).md).
 > **Clasificación:** TEMA DE DETALLE
 
 ---
@@ -179,6 +179,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [08 — Funciones y Operadores de Acceso](<08 — Funciones y Operadores de Acceso.md>)*
+*Siguiente tema sugerido: [08 — Funciones y Operadores de Acceso](<08 — Structs en C y C++.md>)*
+
+
+
 
 

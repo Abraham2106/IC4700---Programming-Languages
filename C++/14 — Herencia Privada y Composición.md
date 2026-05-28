@@ -211,6 +211,9 @@ int main() {
 
 ---
 
-*Siguiente tema sugerido: [15 — Principios SOLID y Liskov uno por uno](<15 — Principios SOLID y Liskov uno por uno.md>)*
+*Siguiente tema sugerido: [15 — Principios SOLID y Liskov uno por uno](<15 — Orden de Construcción y Destrucción (Depth).md>)*
+
+
+
 
 
