@@ -1,0 +1,5 @@
+cpp_secrets.pdf
+__pycache__*
+cpp_secrets.txt
+cpp_secrets.locations.json
+locate_outline_titles.py 
