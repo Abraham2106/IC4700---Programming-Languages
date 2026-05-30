@@ -1,45 +1,20 @@
-﻿# 21 — Sobrecarga de Operadores (operator)
+# Sobrecarga de Operadores (operator) — Extender la sintaxis nativa para tipos de usuario con consistencia semántica
 
-> **Resumen Ejecutivo:** La sobrecarga de operadores en C++ permite redefinir el comportamiento de los operadores nativos (`+`, `-`, `*`, `<<`, `[]`, etc.) sobre clases y estructuras personalizadas. Esto facilita la integración de nuevos tipos dentro de la sintaxis estándar del lenguaje de forma intuitiva.
->
-> **Prerrequisitos:** Haber leído [11 — Sobrecarga (Overloading)](11 — Sobrecarga (Overloading).md).
-> **Clasificación:** TEMA DE DETALLE
+La sobrecarga de operadores permite a las clases personalizadas integrarse de forma natural con los operadores nativos del lenguaje. Mantener la coherencia semántica con las operaciones aritméticas y lógicas estándar es crítico para evitar interfaces confusas.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Reglas de Sobrecarga de Operadores](#teoría-reglas-de-sobrecarga-de-operadores)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Proyecto Aplicado](#proyecto-aplicado)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 La sobrecarga de operadores consiste en definir funciones especiales con la palabra clave `operator` seguida del símbolo a sobrecargar (ej. `operator+`), indicando al compilador cómo procesar operaciones algebraicas o lógicas sobre nuestros objetos.
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 Habilita la legibilidad matemática y de flujos. En lugar de escribir llamadas engorrosas como `v1.sumar(v2).multiplicar(5)`, podemos escribir directamente `(v1 + v2) * 5`, integrando el comportamiento de forma natural.
 
 ---
 
-## Conceptos Previos
-- Concepto de funciones libres (no miembros) vs métodos de clase.
-- Qué es el paso de parámetros por referencia constante.
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -71,9 +46,9 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### ¿Qué hace el compilador con un operador sobrecargado?
+### 3.1 ¿Qué hace el compilador con un operador sobrecargado?
 - La sobrecarga de operadores es enteramente **azúcar sintáctica** en tiempo de compilación.
 - Cuando el compilador parsea la línea `v1 + v2`:
   1. Busca si existe un método dentro de la clase de `v1` con la firma `v1.operator+(v2)`.
@@ -82,23 +57,23 @@ int main() {
 
 ---
 
-## Teoría: Reglas de Sobrecarga de Operadores
+## 4. Teoría: Reglas de Sobrecarga de Operadores
 
-### 1. Limitaciones Clave
+### 4.1 1. Limitaciones Clave
 - **No se pueden crear operadores nuevos:** No puedes inventar operadores como `**` o `%%`. Solo puedes sobrecargar operadores existentes en el estándar de C++.
 - **La precedencia y asociatividad no cambian:** El operador `*` siempre tendrá mayor prioridad de evaluación que el operador `+`.
 - **Al menos un argumento debe ser un tipo definido por el usuario:** No puedes redefinir el comportamiento de `1 + 2` sobre enteros primitivos.
 - Operadores que **deben** ser funciones miembro obligatoriamente: `operator=` (asignación), `operator[]` (índice), `operator->` (acceso a miembros), `operator()` (llamada a función).
 
-### 2. Miembro vs No Miembro
+### 4.2 2. Miembro vs No Miembro
 - **Función Miembro:** El argumento de la izquierda del operador es implícitamente `this`.
 - **Función No Miembro:** Útil para operadores simétricos o cuando la clase de la izquierda no es modificable (ej. `std::ostream` en `std::cout << objeto`). Suele requerir declararse como `friend` para acceder a atributos privados.
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Operador de Comparación (`operator==`)
+### 5.1 Nivel Simple: Operador de Comparación (`operator==`)
 ```cpp
 struct Punto {
     int x, y;
@@ -108,7 +83,7 @@ struct Punto {
 };
 ```
 
-### Nivel Aplicado: Operador de Índice (`operator[]`)
+### 5.2 Nivel Aplicado: Operador de Índice (`operator[]`)
 Permite acceder y modificar elementos como si el objeto fuera un arreglo nativo.
 ```cpp
 #include <vector>
@@ -124,7 +99,7 @@ public:
 };
 ```
 
-### Nivel Complejo: Sobrecarga del Operador de Llamada (`operator()`) - Functors
+### 5.3 Nivel Complejo: Sobrecarga del Operador de Llamada (`operator()`) - Functors
 Habilita que un objeto se comporte como una función (functor), pudiendo mantener estado interno persistente.
 ```cpp
 #include <iostream>
@@ -148,14 +123,14 @@ int main() {
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 En C++ moderno (desde C++20), se prefiere sobrecargar únicamente el operador de comparación de tres vías (`operator<=>`), comúnmente llamado operador nave espacial (spaceship operator). A partir de esta única función, el compilador deduce automáticamente todos los operadores relacionales asociados (`<`, `<=`, `>`, `>=`, `==`, `!=`).
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Sobrecargar Operador de Multiplicación por Escalar
+### Exercise 1 — Sobrecargar Operador de Multiplicación por Escalar
 Sobrecarga el operador de multiplicación para permitir escalar un `Vector` por un valor de tipo `float` por la derecha.
 
 ```cpp
@@ -179,22 +154,16 @@ int main() {
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 7. Errores Comunes y Anti-Patrones
 - **Violar la semántica esperada:** Sobrecargar `operator+` para que reste en lugar de sumar. Confunde gravemente a otros desarrolladores y arruina la mantenibilidad.
 - **Retornar referencias a objetos locales:** En operadores aritméticos como `+`, retornar referencias (`T&`) en lugar de copias por valor (`T`) causa dangling references inmediatas, ya que el objeto temporal resultante de la suma se destruye al salir de la función del operador.
 
 ---
 
-## Conclusión y Checklist Mental
-- [ ] ¿Cuáles operadores están prohibidos para sobrecarga en C++?
-- [ ] ¿Por qué el operador de salida `<<` se suele sobrecargar como función libre en lugar de método miembro?
-- [ ] ¿Cómo funciona el operador de comparación espacial `<=>` introducido en C++20?
+## 8. Conclusión
 
 ---
 
-*Siguiente tema sugerido: [22 — Polimorfismo y Funciones Virtuales](<22 — Polimorfismo y Funciones Virtuales.md>)*
+---
 
-
-
-
-
+*Next: `22 — Polimorfismo y Funciones Virtuales.md` — Despacho dinámico, vtables y vptrs.*

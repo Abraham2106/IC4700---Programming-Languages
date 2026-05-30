@@ -1,45 +1,21 @@
-﻿# 13 — Uniones y std::variant
+# Uniones y std::variant — Seguridad de tipos suma y optimización de espacio en memoria
 
-> **Resumen Ejecutivo:** Las uniones en C y C++ permiten almacenar diferentes tipos de datos en la misma posición física de memoria RAM, optimizando el tamaño. C++ moderno introduce `std::variant`, una alternativa type-safe (unión etiquetada) que elimina la corrupción accidental de memoria.
->
-> **Prerrequisitos:** Haber leído [09 — Structs en C y C++](<09 — Global Scope y Objetos Globales.md>).
-> **Clasificación:** TEMA DE DETALLE
+Las uniones tradicionales de C permiten superponer múltiples variables en el mismo espacio físico de memoria, arriesgando la seguridad de tipos. `std::variant` proporciona un tipo suma seguro y moderno que realiza un seguimiento del tipo activo sin incurrir en alocación dinámica.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Uniones Clásicas vs Variant Moderno](#teoría-uniones-clásicas-vs-variant-moderno)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Proyecto Aplicado](#proyecto-aplicado)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 - **Unión (`union`):** Estructura donde todos sus miembros comparten la misma dirección inicial de memoria. El tamaño de la unión es igual al tamaño de su miembro más grande.
 - **Unión Etiquetada (`std::variant` - C++17):** Contenedor type-safe que almacena una de las alternativas de tipo declaradas, sabiendo en todo momento qué tipo está activo.
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 Las uniones tradicionales carecen de información de tipo en runtime. Leer un miembro de tipo `float` cuando escribiste previamente en el miembro `int` produce una reinterpretación directa de bits (Type Punning), lo cual suele ser fuente de errores sutiles o comportamiento indefinido.
 
 ---
 
-## Conceptos Previos
-- Representación binaria de diferentes tipos en memoria (e.g. enteros vs flotantes).
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -69,22 +45,22 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### Disposición de Memoria: Union vs Struct vs Variant
+### 3.1 Disposición de Memoria: Union vs Struct vs Variant
 - Si declaras un struct con `int a` y `double b`, se reservan `sizeof(int) + padding + sizeof(double)` (usualmente 16 bytes). Sus miembros conviven secuencialmente.
 - Si declaras una unión con esos mismos campos, se reservan únicamente `sizeof(double)` (8 bytes). La dirección de memoria base de `a` y `b` es exactamente la misma (`&u.a == &u.b`).
 - `std::variant<int, double>` reserva suficiente espacio para albergar el tipo más grande (`double` -> 8 bytes) más un byte adicional (el **tag** o etiqueta) para llevar registro de cuál es el índice del tipo activo en ese instante en memoria RAM.
 
 ---
 
-## Teoría: Uniones Clásicas vs Variant Moderno
+## 4. Teoría: Uniones Clásicas vs Variant Moderno
 
-### 1. Uniones de C
+### 4.1 1. Uniones de C
 - No pueden contener tipos con constructores o destructores no triviales (como `std::string` o `std::vector`) de forma sencilla, ya que el compilador no sabría cuándo llamar al destructor correcto de la memoria compartida.
 - Carecen de validación sintáctica o en runtime del miembro activo.
 
-### 2. `std::variant` (C++17)
+### 4.2 2. `std::variant` (C++17)
 - Permite albergar cualquier clase compleja de C++.
 - Garantiza la llamada al destructor apropiado del tipo activo cuando el variant sale de ámbito.
 - Provee la función `std::holds_alternative<T>(v)` para verificar si cierto tipo está activo.
@@ -92,9 +68,9 @@ int main() {
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Unión Anónima
+### 5.1 Nivel Simple: Unión Anónima
 Se utiliza dentro de estructuras para agrupar campos sin requerir un nombre intermedio de acceso.
 ```cpp
 struct Nodo {
@@ -106,7 +82,7 @@ struct Nodo {
 };
 ```
 
-### Nivel Aplicado: Inspección de Tipos con `std::holds_alternative`
+### 5.2 Nivel Aplicado: Inspección de Tipos con `std::holds_alternative`
 ```cpp
 #include <iostream>
 #include <variant>
@@ -120,7 +96,7 @@ void procesar(const std::variant<int, std::string>& v) {
 }
 ```
 
-### Nivel Complejo: Despacho Polimórfico Seguro usando `std::visit`
+### 5.3 Nivel Complejo: Despacho Polimórfico Seguro usando `std::visit`
 El uso de `std::visit` con expresiones lambda sobrecargadas permite realizar operaciones limpias basadas en el tipo activo del variant sin recurrir a herencia virtual clásica.
 ```cpp
 #include <iostream>
@@ -148,14 +124,14 @@ int main() {
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 En analizadores sintácticos (parsers) o compiladores, `std::variant` es ideal para modelar el Árbol de Sintaxis Abstracta (AST), donde cada nodo del árbol puede ser uno de múltiples tipos de tokens diferentes.
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Implementar una Unión Etiquetada Manual
+### Exercise 1 — Implementar una Unión Etiquetada Manual
 Implementa una simulación rústica de unión etiquetada combinando un `struct`, un `enum` para la etiqueta y una `union` clásica para contener los datos.
 
 ```cpp
@@ -188,22 +164,16 @@ int main() {
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 7. Errores Comunes y Anti-Patrones
 - **Uso accidental de un miembro inactivo en una unión:** Causa corrupción lógica de datos sin disparar advertencias del compilador.
 - **No capturar excepciones al usar `std::get`:** Si no se está seguro de qué tipo reside en el `variant`, se debe capturar `std::bad_variant_access` o preferir el uso de `std::get_if`, el cual devuelve un puntero nulo (`nullptr`) si la alternativa solicitada no está activa en lugar de lanzar una excepción.
 
 ---
 
-## Conclusión y Checklist Mental
-- [ ] ¿Cómo se distribuyen los miembros de una unión en memoria RAM?
-- [ ] ¿Qué ventaja de seguridad ofrece `std::variant` sobre una unión tradicional?
-- [ ] ¿Qué es y cuándo se lanza `std::bad_variant_access`?
+## 8. Conclusión
 
 ---
 
-*Siguiente tema sugerido: [14 — Herencia Privada y Composición](<14 — Principios SOLID y Liskov uno por uno.md>)*
+---
 
-
-
-
-
+*Next: `14 — Herencia Privada y Composición.md` — Reutilización de código frente a relaciones jerárquicas.*

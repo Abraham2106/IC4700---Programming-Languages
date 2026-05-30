@@ -1,35 +1,17 @@
-# 28 — Operadores de Acceso, Índice y Llamada
+# Operadores de Acceso, Índice y Llamada — Sobrecarga de [], -> y () para simular contenedores y functores
 
-> **Resumen Ejecutivo:** Los operadores de acceso a miembros (`operator->`), índice (`operator[]`) y llamada a función (`operator()`) son especiales en C++ porque deben ser implementados estrictamente como funciones miembro de una clase. Su personalización permite crear punteros inteligentes (smart pointers), envoltorios de arreglos seguros y objetos función (functors). Esta nota analiza la mecánica de resolución recursiva del compilador para el operador de acceso y el uso de proxies y objetos invocables avanzados.
->
-> **Prerrequisitos:** Haber leído [04 — Punteros en C y C++](<04 — Punteros en C y C++.md>) y [21 — Sobrecarga de Operadores (operator)](<21 — Sobrecarga de Operadores (operator).md>).
-> **Clasificación:** TEMA DE DETALLE
+Sobrecarga de operadores de acceso (`->`), índice (`[]`) y llamada a función (`()`) permite crear abstracciones de punteros inteligentes, colecciones personalizadas y functores. Estas interfaces unifican la sintaxis de tipos de usuario con las construcciones nativas.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Reglas Específicas de operator->, operator[] y operator()](#teoría-reglas-específicas-de-operator--operator-y-operator)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 - **`operator->` (Acceso a Miembro):** Se usa para que un objeto actúe como un puntero. Devuelve un puntero u otro objeto que implemente el operador `->` en cadena.
 - **`operator[]` (Subíndice):** Habilita la sintaxis de arreglo en un objeto. Típicamente toma una clave o índice y devuelve una referencia al elemento correspondiente.
 - **`operator()` (Llamada de Función):** Permite invocar a un objeto usando la sintaxis de una función tradicional. Los objetos de este tipo se denominan *functors* (objetos función).
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 - Estos operadores son la base sintáctica para la abstracción de tipos complejos en la biblioteca estándar de C++:
   - `std::unique_ptr` usa `operator->` para simular punteros nativos.
   - `std::vector` y `std::map` usan `operator[]` para acceso de elementos.
@@ -37,13 +19,7 @@
 
 ---
 
-## Conceptos Previos
-- Diferencia entre firmas const y no-const de métodos.
-- Definición de punteros nativos y dereferencia (`*` y `->`).
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -106,9 +82,9 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### La mecánica recursiva profunda de `operator->`
+### 3.1 La mecánica recursiva profunda de `operator->`
 A diferencia de otros operadores binarios de C++ que toman un operando izquierdo y uno derecho en una sola operación, el operador `->` es un operador unario con una semántica de evaluación especial definida por el compilador:
 1. Si la expresión es `objeto->miembro`:
 2. Si `objeto` es un puntero nativo de C++ (`T*`), se realiza la dereferencia directa en la CPU y se accede al miembro de la dirección física.
@@ -132,26 +108,26 @@ A diferencia de otros operadores binarios de C++ que toman un operando izquierdo
 
 ---
 
-## Teoría: Reglas Específicas de operator->, operator[] y operator()
+## 4. Teoría: Reglas Específicas de operator->, operator[] y operator()
 
-### 1. Obligación de ser Funciones Miembro
+### 4.1 1. Obligación de ser Funciones Miembro
 C++ prohíbe definir estos operadores como funciones no miembro (libres). Escribir `friend T* operator->(const MiClase&)` o similares producirá un error inmediato de compilación. Esto garantiza que el lado izquierdo de la expresión sea siempre un objeto legítimo de la clase contenedora.
 
-### 2. Parámetros del operator[]
+### 4.2 2. Parámetros del operator[]
 - Debe aceptar exactamente **un** argumento.
 - Si requieres acceso multidimensional (ej. `matriz[x, y]`), C++ tradicional no lo permitía directamente con `[]` (requiere envolver las coordenadas en una estructura auxiliar, como se muestra en el libro *Secrets of C++ Masters*, o sobrecargar `operator()`).
 - *Nota moderna:* Desde C++23 se permite pasar múltiples argumentos dentro de `operator[]`, pero la compatibilidad hacia atrás prefiere functors o structs auxiliares para representar índices compuestos.
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Acceso de Lectura/Escritura en Colecciones
+### 5.1 Nivel Simple: Acceso de Lectura/Escritura en Colecciones
 El diseño estándar de `operator[]` siempre incluye dos sobrecargas:
 - `T& operator[](size_t index)` para permitir asignaciones (`c[0] = valor`).
 - `const T& operator[](size_t index) const` para su uso seguro en contextos constantes.
 
-### Nivel Aplicado: Arreglos Multidimensionales simulados con anónimos
+### 5.2 Nivel Aplicado: Arreglos Multidimensionales simulados con anónimos
 El libro describe cómo usar clases auxiliares para simular múltiples dimensiones:
 ```cpp
 struct Indice3D {
@@ -161,34 +137,33 @@ struct Indice3D {
 // Uso: arreglo[Indice3D(1, 2, 3)]
 ```
 
-### Nivel Complejo: Functors para algoritmos de la STL
+### 5.3 Nivel Complejo: Functors para algoritmos de la STL
 Los functors creados con `operator()` permiten mantener estado local y ser pasados a algoritmos como `std::for_each` o `std::sort`. Esto ofrece mejor rendimiento en compilación que los punteros a funciones tradicionales porque el compilador puede inlinear la llamada directamente.
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 En el patrón de diseño Proxy y en la programación de envoltorios de comunicación, `operator->` es crucial para desviar llamadas de interfaz de manera transparente a objetos remotos o perezosos (lazy-loaded).
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Crear una matriz 2D con operator()
+### Exercise 1 — Crear una matriz 2D con operator()
 Implementa una clase `Matriz2D` de enteros con un tamaño fijo. Sobrecarga el `operator()` para permitir leer y escribir elementos usando la sintaxis `matriz(fila, columna)`.
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 7. Errores Comunes y Anti-Patrones
 - **No proveer la sobrecarga `const` de `operator[]`:** Impide que los contenedores sean leídos si son pasados como referencia constante a funciones de renderizado o cálculo.
 - **Retornar punteros locales en `operator->`:** Causa fugas de memoria o punteros inválidos si el objeto retornado es temporal y se destruye antes de resolver la llamada.
 
 ---
 
-## Conclusión y Checklist Mental
-- [ ] ¿Cómo funciona el encadenamiento recursivo del operador `->`?
-- [ ] ¿Por qué es necesario definir versiones `const` y no-const de `operator[]`?
-- [ ] ¿Qué ventaja tiene un functor sobre un puntero a función tradicional?
+## 8. Conclusión
 
 ---
 
-*Siguiente tema sugerido: [29 — Sobrecarga de los operadores new y delete y placement new](<29 — Sobrecarga de los operadores new y delete y placement new.md>)*
+---
+
+*Next: `29 — Sobrecarga de los operadores new y delete y placement new.md` — Alocadores personalizados y construcción en memoria prealocada.*

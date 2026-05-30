@@ -1,47 +1,22 @@
-﻿# 19 — Gestión de Memoria Stack vs Heap
+# Gestión de Memoria Stack vs Heap — El modelo de memoria físico de los sistemas de bajo nivel
 
-> **Resumen Ejecutivo:** La memoria RAM disponible para los programas en C++ se divide conceptualmente en dos regiones principales: el Stack (Pila) y el Heap (Montículo). Comprender sus diferencias operativas es crucial para balancear la velocidad, el tamaño de los datos y el control del ciclo de vida físico del software.
->
-> **Prerrequisitos:** Haber leído [07 — Ámbito y Ciclo de Vida (Scope)](07 — Funciones y Operadores de Acceso.md).
-> **Clasificación:** TEMA DE DETALLE
+La memoria de un programa se divide físicamente en el stack, de asignación ultrarrápida y ciclo de vida ligado al scope, y el heap, de tamaño flexible pero gestión manual y costosa. Diseñar software de sistemas eficiente requiere balancear el uso de ambas regiones.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Stack vs Heap](#teoría-stack-vs-heap)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Proyecto Aplicado](#proyecto-aplicado)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 - **Stack (Pila):** Memoria de acceso estructurado LIFO (Last In, First Out) gestionada automáticamente por la CPU.
 - **Heap (Montículo):** Región de memoria libre de propósito general gestionada dinámicamente por el programador (vía alocaciones explícitas).
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 - **Rendimiento:** Las alocaciones en el Stack tardan fracciones de nanosegundo. Las alocaciones en el Heap requieren llamadas al sistema (sys-calls) y algoritmos de búsqueda que pueden ser miles de veces más lentos.
 - **Limitación física:** El Stack tiene un tamaño limitado por el sistema operativo (típicamente 1MB a 8MB). Exceder este límite causa crashes catastróficos inmediatos por desbordamiento de pila (Stack Overflow). El Heap solo está limitado por la RAM total física y virtual del equipo.
 
 ---
 
-## Conceptos Previos
-- Qué es un puntero conceptualmente.
-- Concepto de llamadas al sistema operativo (syscalls).
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -65,13 +40,13 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### ¿Cómo opera la CPU en cada memoria?
+### 3.1 ¿Cómo opera la CPU en cada memoria?
 
 #### 1. En el Stack:
 - La CPU utiliza un registro interno de propósito especial llamado **Stack Pointer** (por ejemplo, `RSP` en x86-64).
-- Alocar memoria consiste simplemente en restar un offset al `RSP` (ej. `SUB RSP, 16` para reservar 16 bytes).
+- Alocar memoria consiste Únicamente en restar un offset al `RSP` (ej. `SUB RSP, 16` para reservar 16 bytes).
 - Liberar consiste en volver a sumarle el offset (`ADD RSP, 16`). Es una sola instrucción básica de CPU a velocidad del hardware.
 - Los accesos a memoria Stack son altamente localizados, lo que aprovecha al máximo la caché L1/L2 de la CPU.
 
@@ -82,9 +57,9 @@ int main() {
 
 ---
 
-## Teoría: Stack vs Heap
+## 4. Teoría: Stack vs Heap
 
-### Tabla Comparativa:
+### 4.1 Tabla Comparativa:
 
 | Aspecto | Stack (Pila) | Heap (Montículo) |
 |---|---|---|
@@ -97,9 +72,9 @@ int main() {
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Alocar arreglos
+### 5.1 Nivel Simple: Alocar arreglos
 ```cpp
 // Stack: Rápido pero peligroso si el tamaño es muy grande
 int arr_stack[1000]; 
@@ -109,7 +84,7 @@ int* arr_heap = new int[1000000];
 delete[] arr_heap;
 ```
 
-### Nivel Aplicado: Reducir copias usando Semántica de Valor en Stack
+### 5.2 Nivel Aplicado: Reducir copias usando Semántica de Valor en Stack
 C++ moderno prefiere pasar objetos por valor si el compilador puede optimizarlos mediante RVO (Return Value Optimization) y semántica de movimiento, eliminando la necesidad de alocar objetos en el Heap solo para "evitar copias".
 ```cpp
 #include <vector>
@@ -122,14 +97,14 @@ std::vector<int> obtener_datos() {
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 En el diseño de sistemas en tiempo real (ej. sistemas automotrices o médicos), el uso del Heap está estrictamente prohibido o limitado a la fase de arranque de la aplicación. Esto se debe a que el tiempo de alocación en el Heap es no determinista (no se puede garantizar que tardará menos de $X$ microsegundos en resolver).
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Provocar un Stack Overflow Controlado
+### Exercise 1 — Provocar un Stack Overflow Controlado
 Escribe una función recursiva infinita para desbordar intencionalmente la memoria Stack. Ejecuta y comprueba cómo el sistema operativo detiene la ejecución inmediatamente.
 
 ```cpp
@@ -154,22 +129,16 @@ int main() {
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 7. Errores Comunes y Anti-Patrones
 - **Memory Leak (Fuga de memoria):** Perder la dirección de un bloque del Heap sin haber invocado a `delete`. El bloque permanece ocupado e inaccesible hasta que el programa termina.
 - **Double Free:** Liberar dos veces el mismo puntero en el Heap. Corrompe los metadatos internos del asignador de memoria y causa vulnerabilidades graves de seguridad.
 
 ---
 
-## Conclusión y Checklist Mental
-- [ ] ¿Entiendes por qué alocar en el Stack es miles de veces más rápido que en el Heap?
-- [ ] ¿Qué es y qué provoca un Stack Overflow?
-- [ ] ¿Por qué los sistemas en tiempo real evitan el uso del Heap durante la fase de ejecución en caliente?
+## 8. Conclusión
 
 ---
 
-*Siguiente tema sugerido: [20 — Operadores new y delete](<20 — Sobrecarga de Operadores (operator).md>)*
+---
 
-
-
-
-
+*Next: `20 — Operadores new y delete.md` — Gestión de memoria dinámica nativa.*

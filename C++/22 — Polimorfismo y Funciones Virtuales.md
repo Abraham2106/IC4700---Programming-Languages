@@ -1,46 +1,21 @@
-﻿# 22 — Polimorfismo y Funciones Virtuales
+# Polimorfismo y Funciones Virtuales — Vtables, vptrs y el coste de la indirección en el despacho dinámico
 
-> **Resumen Ejecutivo:** El polimorfismo dinámico es el mecanismo por el que una llamada a través de un puntero o referencia de clase base puede invocar en tiempo de ejecución la implementación correcta de la clase derivada. Se implementa mediante funciones virtuales y la tabla de dispatch virtual (vtable), el único mecanismo de overhead de runtime que C++ introduce en la OOP.
->
-> **Prerrequisitos:** Haber leído [12 — Herencia y Visibilidad](<12 — Herencia y Visibilidad.md>) y [16 — Orden de Construcción y Destrucción (Depth)](<16 — Constructores en C++.md>).
-> **Clasificación:** TEMA DE DETALLE
+El polimorfismo dinámico permite invocar comportamientos derivados a través de punteros a clases base mediante despacho dinámico en tiempo de ejecución. Este mecanismo se implementa mediante tablas virtuales (vtables) que introducen una indirección de memoria.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Virtual, Override y Clases Abstractas](#teoría-virtual-override-y-clases-abstractas)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Proyecto Aplicado](#proyecto-aplicado)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 El **polimorfismo dinámico** (runtime polymorphism) permite que un mismo fragmento de código opere sobre objetos de diferentes tipos derivados a través de un interfaz de clase base común. La selección de qué función concreta invocar ocurre en **tiempo de ejecución**, no en compilación.
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 - **Extensibilidad:** Puedes añadir nuevas clases derivadas (ej. un nuevo tipo de `Pago`) sin modificar el código cliente que trabaja con la interfaz base (`Pago::procesar()`).
 - **Riesgo crítico sin `virtual`:** Olvidar declarar el destructor de la clase base como `virtual` es uno de los errores de diseño C++ más frecuentes y destructivos. Provoca que al destruir un objeto derivado a través de un puntero de la base, solamente se invoque el destructor de la base, dejando los recursos del objeto derivado sin liberar.
 
 ---
 
-## Conceptos Previos
-- Comprensión de herencia y punteros a clases base.
-- Qué es la resolución de nombres (name resolution) en tiempo de compilación vs. tiempo de ejecución.
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -82,9 +57,9 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### La Tabla Virtual (vtable) y el Puntero Virtual (vptr)
+### 3.1 La Tabla Virtual (vtable) y el Puntero Virtual (vptr)
 
 Cuando el compilador detecta al menos una función `virtual` en una clase, transforma la memoria del objeto de la siguiente manera:
 
@@ -116,12 +91,12 @@ Objeto Gato en Heap:
 
 ---
 
-## Teoría: Virtual, Override y Clases Abstractas
+## 4. Teoría: Virtual, Override y Clases Abstractas
 
-### 1. La palabra clave `virtual`
+### 4.1 1. La palabra clave `virtual`
 Indica al compilador que la resolución de la función debe diferirse al runtime consultando la vtable del objeto real, no el tipo estático del puntero/referencia.
 
-### 2. La palabra clave `override` (C++11)
+### 4.2 2. La palabra clave `override` (C++11)
 Verificación en tiempo de **compilación** de que la firma de la función derivada coincide exactamente con una función virtual de la base. Si hay un error tipográfico o discrepancia de firma, el compilador falla con un error claro.
 ```cpp
 class Base {
@@ -137,7 +112,7 @@ class Derivada : public Base {
 };
 ```
 
-### 3. La palabra clave `final` (C++11)
+### 4.3 3. La palabra clave `final` (C++11)
 - Sobre una función: impide que clases derivadas la sobrescriban.
 - Sobre una clase: impide que se herede de ella.
 ```cpp
@@ -145,7 +120,7 @@ class Concreto final : public Base {};    // Nadie puede heredar de Concreto
 void metodo() final;                       // Nadie puede sobreescribir este método
 ```
 
-### 4. Funciones Virtuales Puras y Clases Abstractas
+### 4.4 4. Funciones Virtuales Puras y Clases Abstractas
 Una función virtual pura (`= 0`) convierte la clase en **abstracta**: no se pueden instanciar objetos directamente de ella. Las clases derivadas están obligadas a proporcionar una implementación concreta.
 ```cpp
 class Figura {
@@ -166,7 +141,7 @@ public:
 };
 ```
 
-### 5. El Destructor Virtual: Regla Absoluta
+### 4.5 5. El Destructor Virtual: Regla Absoluta
 **Siempre** que una clase pueda ser usada de forma polimórfica (es decir, que se manipulen punteros o referencias de la clase base que apunten a objetos derivados), su destructor **debe** ser `virtual`.
 
 ```cpp
@@ -190,9 +165,9 @@ int main() {
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Polimorfismo en Colecciones
+### 5.1 Nivel Simple: Polimorfismo en Colecciones
 El poder real del polimorfismo se revela al manejar colecciones heterogéneas de objetos derivados.
 ```cpp
 #include <vector>
@@ -211,7 +186,7 @@ int main() {
 }
 ```
 
-### Nivel Aplicado: `dynamic_cast` y RTTI
+### 5.2 Nivel Aplicado: `dynamic_cast` y RTTI
 C++ permite verificar en runtime el tipo real de un objeto polimórfico usando `dynamic_cast`. Si el cast es inválido, devuelve `nullptr` (para punteros) o lanza `std::bad_cast` (para referencias).
 ```cpp
 #include <iostream>
@@ -228,7 +203,7 @@ if (Perro* perro = dynamic_cast<Perro*>(a)) {
 delete a;
 ```
 
-### Nivel Complejo: CRTP (Curiously Recurring Template Pattern)
+### 5.3 Nivel Complejo: CRTP (Curiously Recurring Template Pattern)
 Una alternativa de polimorfismo estático (sin vtable) que resuelve el tipo correcto en tiempo de compilación usando templates, eliminando el overhead del despacho dinámico.
 ```cpp
 // Polimorfismo estático: cero overhead de vtable en runtime
@@ -248,9 +223,9 @@ public:
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 
-### Comparativa: Polimorfismo Dinámico vs Estático
+### 6.1 Comparativa: Polimorfismo Dinámico vs Estático
 
 | Característica | Virtual (Dinámico) | CRTP / Overloading (Estático) |
 |---|---|---|
@@ -262,9 +237,9 @@ public:
 
 ---
 
-## Proyecto Aplicado
+## 7. Proyecto Aplicado
 
-### Sistema de Renderizado Polimórfico
+### 7.1 Sistema de Renderizado Polimórfico
 ```cpp
 #include <iostream>
 #include <vector>
@@ -320,9 +295,9 @@ int main() {
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Implementar Jerarquía con Destructor Virtual
+### Exercise 1 — Implementar Jerarquía con Destructor Virtual
 El siguiente código tiene un memory leak crítico. Identifica la causa exacta y corrígela.
 
 ```cpp
@@ -357,7 +332,7 @@ int main() {
 }
 ```
 
-### Ejercicio 2 — Diseñar una Clase Abstracta
+### Exercise 2 — Diseñar una Clase Abstracta
 Diseña una interfaz abstracta `Serializable` con un método virtual puro `serializar()` y dos clases concretas `SerializadorJSON` y `SerializadorXML` que la implementen. Luego escribe una función `guardar(const Serializable& s, const std::string& destino)` que funcione de forma polimórfica.
 
 ```cpp
@@ -368,9 +343,9 @@ Diseña una interfaz abstracta `Serializable` con un método virtual puro `seria
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 8. Errores Comunes y Anti-Patrones
 
-### Error #1: Destructor de base no virtual (el más común y destructivo)
+### 8.1 Error #1: Destructor de base no virtual (el más común y destructivo)
 ```cpp
 // Malo: Destructor no virtual ? Memory Leak garantizado
 class Base {
@@ -383,7 +358,7 @@ class Base {
 };
 ```
 
-### Error #2: Llamar funciones virtuales en constructores/destructores
+### 8.2 Error #2: Llamar funciones virtuales en constructores/destructores
 ```cpp
 class Base {
 public:
@@ -401,7 +376,7 @@ class Derivada : public Base {
 // Derivada d; ? Imprime "Base", no "Derivada". Comportamiento sorpresivo.
 ```
 
-### Error #3: Confundir override con overloading
+### 8.3 Error #3: Confundir override con overloading
 ```cpp
 class Base {
     virtual void procesar(int x);
@@ -419,19 +394,12 @@ class Mala : public Base {
 
 ---
 
-## Conclusión y Checklist Mental
+## 9. Conclusión
 
 **Los tres puntos más críticos:**
 1. El polimorfismo dinámico tiene un costo real de hardware: un puntero extra (vptr) por objeto y una indirección extra (vtable lookup) por llamada virtual. Úsalo cuando lo necesites, no de forma refleja.
 2. El destructor `virtual` en clases base polimórficas no es opcional: es una regla invariable. Olvidarlo es un bug de memory leak garantizado.
 3. Siempre usa `override` al sobrescribir funciones virtuales: es la única defensa estática contra errores silenciosos de firma.
-
-**Checklist de retención:**
-- [ ] ¿Puedes explicar qué es la vtable y el vptr, y por qué el compilador los genera?
-- [ ] ¿Entiendes por qué llamar a una función virtual desde un constructor no despacha dinámicamente?
-- [ ] ¿Sabes distinguir entre `virtual`, `override`, `final` y función virtual pura (`= 0`)?
-- [ ] ¿Puedes explicar por qué un destructor no virtual en una clase base polimórfica causa un memory leak?
-- [ ] ¿Conoces cuándo preferir polimorfismo estático (CRTP) sobre el dinámico (virtual)?
 
 ---
 
@@ -439,7 +407,6 @@ class Mala : public Base {
 
 *Para profundizar más: Revisar [01 — Diferencias entre C, C++ y Rust](<01 — Diferencias entre C, C++ y Rust.md>) con los nuevos conocimientos adquiridos para ver cómo estos mecanismos de bajo nivel diferencian filosóficamente a C++ de Rust y C.*
 
+---
 
-
-
-
+*Next: `23 — Destructores (Invocacion directa de destructores Explicita e Implicita, definicion de operadores).md` — Invocación directa de destructores y su papel en placement new.*

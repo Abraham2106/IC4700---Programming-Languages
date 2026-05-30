@@ -1,31 +1,12 @@
-﻿# 01 — Diferencias entre C, C++ y Rust
+# Diferencias entre C, C++ y Rust — Tres filosofías de gestión de memoria y seguridad de sistemas
 
-> **Resumen Ejecutivo:** Tres lenguajes de sistemas, tres filosofías radicalmente distintas sobre quién controla la memoria y cómo se garantiza la seguridad. Entender sus diferencias es entender la evolución del software de bajo nivel.
->
-> **Prerrequisitos:** Ninguno estricto. Ayuda haber visto pseudocódigo o algún lenguaje de alto nivel.
-> **Clasificación:** TEMA MACRO
+C, C++ y Rust compiten en el mismo dominio de sistemas, pero difieren radicalmente en su gestión de recursos. Mientras C otorga libertad absoluta al programador a costa de la seguridad, C++ introduce abstracciones de ciclo de vida (RAII) y Rust impone un modelo riguroso de propiedad en tiempo de compilación. Esta tensión define la confiabilidad y el rendimiento del software de bajo nivel.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Los Tres Paradigmas](#teoría-los-tres-paradigmas)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Proyecto Aplicado](#proyecto-aplicado)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 
 C, C++ y Rust son tres lenguajes que compiten en el mismo nicho: **código cercano al hardware, máximo rendimiento, control total sobre la memoria**. Sin embargo, cada uno tiene una respuesta distinta a la pregunta: *"¿Quién es responsable de que el programa no se rompa?"*
 
@@ -33,11 +14,11 @@ C, C++ y Rust son tres lenguajes que compiten en el mismo nicho: **código cerca
 - **C++** responde: *El programador, pero te damos herramientas para ayudarte (si las usas).*
 - **Rust** responde: *El compilador. Antes de que el programa corra, él verifica la corrección.*
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 
 El 70% de las vulnerabilidades de seguridad en software de sistemas (CVEs de Chrome, Linux, Windows) provienen de errores de memoria: use-after-free, buffer overflows, data races. Estas tres decisiones de diseño lingüístico tienen consecuencias directas en **seguridad nacional, infraestructura crítica y millones de dispositivos IoT**.
 
-### Dónde se usan en la vida real
+### 1.3 Dónde se usan en la vida real
 
 | Lenguaje | Dominio principal |
 |---|---|
@@ -45,26 +26,7 @@ El 70% de las vulnerabilidades de seguridad en software de sistemas (CVEs de Chr
 | C++ | Game engines (Unreal), navegadores (Chrome/Firefox), bases de datos (MySQL), trading HFT |
 | Rust | WebAssembly, async runtimes (Tokio), seguridad (Firefox Quantum, Android HAL) |
 
-### Objetivos de Aprendizaje
-
-Al finalizar este artículo podrás:
-- Comprender las diferencias filosóficas entre los tres lenguajes
-- Identificar cuándo elegir cada uno según el contexto
-- Entender el modelo de ownership de Rust vs el modelo manual de C/C++
-- Evitar el error de tratar C++ como "C con clases" (es mucho más)
-
----
-
-## Conceptos Previos
-
-Antes de comenzar deberías conocer:
-- Qué es la memoria RAM y la diferencia entre Stack y Heap (superficialmente)
-- Qué es compilar vs interpretar
-- Qué es un puntero conceptualmente (una dirección de memoria)
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```c
 // C: Tú manejas todo. El compilador no te avisa.
@@ -106,9 +68,9 @@ fn main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### ¿Qué hace el compilador con cada uno?
+### 3.1 ¿Qué hace el compilador con cada uno?
 
 **C — `malloc` + `free`:**
 - `malloc(sizeof(int))` hace una syscall a `brk` o `mmap` en Linux, reservando bytes en el heap.
@@ -130,7 +92,7 @@ fn main() {
   3. No puedes usar un valor después de que fue movido o liberado.
 - No existe garbage collector. No existe runtime overhead. La seguridad es **cero-costo**.
 
-### Tabla de modelo de memoria
+### 3.2 Tabla de modelo de memoria
 
 | Aspecto | C | C++ | Rust |
 |---|---|---|---|
@@ -144,9 +106,9 @@ fn main() {
 
 ---
 
-## Teoría: Los Tres Paradigmas
+## 4. Teoría: Los Tres Paradigmas
 
-### C — El Lenguaje de la Máquina
+### 4.1 C — El Lenguaje de la Máquina
 
 C fue diseñado en 1972 por Dennis Ritchie para reescribir Unix. Su filosofía es **"confía en el programador"**. El lenguaje es casi una abstracción delgada sobre el ensamblador.
 
@@ -165,7 +127,7 @@ C fue diseñado en 1972 por Dennis Ritchie para reescribir Unix. Su filosofía e
 - Drivers de dispositivos
 - Cuando el runtime de C++ es inaceptable
 
-### C++ — El Lenguaje de las Abstracciones de Cero Costo
+### 4.2 C++ — El Lenguaje de las Abstracciones de Cero Costo
 
 Bjarne Stroustrup diseñó C++ en los 80s con una premisa: **añadir OOP y abstracciones poderosas sin pagar costo en runtime**. C++ es un superconjunto casi completo de C.
 
@@ -182,7 +144,7 @@ Bjarne Stroustrup diseñó C++ en los 80s con una premisa: **añadir OOP y abstr
 
 **Error conceptual grave:** Tratar C++ como "C con clases" ignora 40 años de evolución. C++ moderno (C++17/20) con `std::variant`, ranges, concepts y coroutines es casi irreconocible comparado con C.
 
-### Rust — El Lenguaje de la Seguridad sin GC
+### 4.3 Rust — El Lenguaje de la Seguridad sin GC
 
 Rust (Mozilla, 2010) nació de una pregunta: *¿Es posible tener la velocidad de C/C++ con garantías de seguridad de memoria en compile-time, sin garbage collector?* La respuesta fue el **Ownership System**.
 
@@ -198,9 +160,9 @@ Rust (Mozilla, 2010) nació de una pregunta: *¿Es posible tener la velocidad de
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: La misma función en los tres lenguajes
+### 5.1 Nivel Simple: La misma función en los tres lenguajes
 
 ```c
 // C: Suma de array
@@ -229,7 +191,7 @@ fn sum(arr: &[i32]) -> i32 {
 }
 ```
 
-### Nivel Aplicado: Manejo de errores
+### 5.2 Nivel Aplicado: Manejo de errores
 
 ```c
 // C: Retorna -1 para indicar error. Convención frágil.
@@ -266,7 +228,7 @@ fn read_file(path: &str) -> Result<String, io::Error> {
 // El llamador DEBE hacer match o propagar con ? — imposible ignorar el error.
 ```
 
-### Nivel Complejo: Concurrencia
+### 5.3 Nivel Complejo: Concurrencia
 
 ```cpp
 // C++: Data race posible. El compilador no lo detecta.
@@ -307,9 +269,9 @@ fn main() {
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 
-### ¿Cuándo elegir qué en un sistema real?
+### 6.1 ¿Cuándo elegir qué en un sistema real?
 
 **Escenario 1: Kernel de SO / Driver**
 → C. Sin runtime, sin excepciones, control absoluto del hardware. Rust está ganando terreno (Linux 6.1 acepta Rust en drivers).
@@ -326,7 +288,7 @@ fn main() {
 **Escenario 5: Base de datos (ej. nuevo motor)**
 → C++ o Rust. RocksDB (C++), TiKV (Rust).
 
-### CAP / Latencia
+### 6.2 CAP / Latencia
 
 - Los tres lenguajes son **deterministas** (sin GC pauses). Apropiados para sistemas de baja latencia.
 - C++ con `std::allocator` custom puede lograr latencias de microsegundos en HFT.
@@ -334,9 +296,9 @@ fn main() {
 
 ---
 
-## Proyecto Aplicado
+## 7. Proyecto Aplicado
 
-### Mini-proyecto: Procesador de logs de seguridad
+### 7.1 Mini-proyecto: Procesador de logs de seguridad
 
 **Escenario:** Un sistema de detección de intrusiones analiza 500,000 líneas de log por segundo. Necesita: velocidad máxima, cero crashes por buffer overflow, soporte de concurrencia.
 
@@ -357,9 +319,9 @@ Rust → Elegido: Borrow Checker elimina las dos categorías de riesgo.
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Comparación de gestión de memoria
+### Exercise 1 — Comparación de gestión de memoria
 
 **Objetivo:** Entender empíricamente la diferencia entre gestión manual y RAII.
 
@@ -393,7 +355,7 @@ int main() {
 
 **Edge case a considerar:** ¿Qué pasa si lanzas una excepción dentro del scope? ¿Se llama el destructor?
 
-### Ejercicio 2 — El costo del UB
+### Exercise 2 — El costo del UB
 
 **Objetivo:** Observar comportamiento indefinido en C.
 
@@ -416,7 +378,7 @@ int main() {
 }
 ```
 
-### Ejercicio 3 — Análisis de trade-offs
+### Exercise 3 — Análisis de trade-offs
 
 **Objetivo:** Razonamiento arquitectónico, no código.
 
@@ -426,9 +388,9 @@ Escribe un documento de decisión de 10 líneas justificando tu elección entre 
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 8. Errores Comunes y Anti-Patrones
 
-### Error #1: Tratar C++ como C
+### 8.1 Error #1: Tratar C++ como C
 
 ```cpp
 // Malo — C++ escrito como C
@@ -457,11 +419,11 @@ int main() {
 
 **Problema:** `malloc` en C++ bypasea constructores. Un `int` está bien, pero `malloc` de objetos C++ produce UB porque no llama constructores.
 
-### Error #2: Pensar que Rust es "C++ más seguro"
+### 8.2 Error #2: Pensar que Rust es "C++ más seguro"
 
 Rust no tiene herencia. No tiene clases. No tiene null. No tiene excepciones implícitas. Es un lenguaje diferente con un modelo de tipos diferente. El error es intentar traducir código C++ a Rust línea a línea. Rust requiere pensar en ownership desde el diseño.
 
-### Error #3: Usar `using namespace std` en headers de C++
+### 8.3 Error #3: Usar `using namespace std` en headers de C++
 
 ```cpp
 // Malo — en un .h contamina todos los que incluyan este header
@@ -478,26 +440,15 @@ std::string get_name();
 
 ---
 
-## Conclusión y Checklist Mental
+## 9. Conclusión
 
 **Los tres puntos más críticos:**
 1. La diferencia fundamental no es sintaxis — es **quién detecta los errores de memoria**: el programador (C), las convenciones del programador (C++), o el compilador (Rust).
 2. C++ moderno (post-C++11) con RAII, smart pointers y STL es un lenguaje diferente al C++ de los 90s. No juzgues C++ por código legacy.
 3. Rust no reemplaza C++ en todos los contextos — el ecosistema, las herramientas y el talento disponible son factores reales de ingeniería.
 
-**Checklist de retención:**
-- [ ] ¿Puedes explicar qué es el Borrow Checker de Rust y qué categoría de bugs elimina?
-- [ ] ¿Puedes decir por qué `malloc` en C++ para objetos es Undefined Behavior?
-- [ ] ¿Puedes dar un ejemplo de un sistema donde C sería la elección correcta sobre Rust?
-- [ ] ¿Sabes qué es RAII y en qué lenguaje(s) aplica?
-- [ ] ¿Puedes explicar por qué un data race es un error de compilación en Rust pero no en C++?
+---
 
 ---
 
-*Siguiente tema sugerido: `02_variables_y_tipos.md` — el sistema de tipos de C++ y cómo difiere de C.*
-
-
-
-
-
-
+*Next: `02 — Const en Variables y Funciones.md` — Uso avanzado y garantías del calificador const.*

@@ -1,46 +1,21 @@
-# 29 — Sobrecarga de `new`, `delete` y `placement new`
+# Sobrecarga de `new`, `delete` y `placement new` — Alocación en zonas de memoria predefinidas y gestores de memoria personalizados
 
-> **Resumen Ejecutivo:** C++ permite la sobrecarga local (por clase) y global de los operadores `new` y `delete`. Esta característica permite reemplazar el asignador de memoria por defecto por estrategias altamente optimizadas, como *Free Lists* (listas libres) y *Placement New*, reduciendo el overhead de asignación y fragmentación en sistemas de alto rendimiento. Esta nota detalla la implementación de listas libres robustas y los requerimientos críticos de alineación física de memoria.
->
-> **Prerrequisitos:** Haber leído [19 — Gestión de Memoria Stack vs Heap](<19 — Gestión de Memoria Stack vs Heap.md>), [20 — Operadores new y delete](<20 — Operadores new y delete.md>) y [23 — Destructores (Invocación Directa, Implícita y Explicita)](<23 — Destructores (Invocacion directa de destructores Explicita e Implicita, definicion de operadores).md>).
-> **Clasificación:** TEMA DE DETALLE
+Reemplazar los operadores globales o de clase `new` y `delete` permite implementar estrategias de gestión de memoria a medida, como pools de memoria. Placement new permite construir objetos en direcciones de memoria prealocadas sin llamadas al sistema.
 
 ---
 
-## Tabla de Contenidos
+## 1. Introducción
 
-- [Introducción](#introducción)
-- [Conceptos Previos](#conceptos-previos)
-- [Hook Example](#hook-example)
-- [Descomposición Under the Hood](#descomposición-under-the-hood)
-- [Teoría: Sobrecarga de new y delete](#teoría-sobrecarga-de-new-y-delete)
-- [Progresión de Complejidad](#progresión-de-complejidad)
-- [Diseño de Sistemas](#diseño-de-sistemas)
-- [Ejercicios](#ejercicios)
-- [Errores Comunes y Anti-Patrones](#errores-comunes-y-anti-patrones)
-- [Conclusión y Checklist Mental](#conclusión-y-checklist-mental)
-
----
-
-## Introducción
-
-### ¿Qué es este tema?
+### 1.1 ¿Qué es este tema?
 La sobrecarga de `new` y `delete` consiste en redefinir las funciones de asignación y liberación de memoria física (`void*`). C++ divide la instanciación en dos pasos: obtener el bloque físico de bytes e invocar al constructor. La sobrecarga permite controlar el primer paso.
 
-### ¿Por qué importa?
+### 1.2 ¿Por qué importa?
 - **Reducción de Latencia:** El asignador por defecto del sistema operativo realiza llamadas al sistema complejas buscando bloques libres. Un asignador especializado basado en *Free Lists* puede resolver solicitudes en tiempo constante $O(1)$ sin llamar al núcleo del sistema operativo.
 - **Control de Fragmentación:** Permite confinar la asignación de una clase a bloques contiguos de memoria pre-reservados.
 
 ---
 
-## Conceptos Previos
-- Alineación de memoria (`alignof`, `alignas`, `std::max_align_t`).
-- Destructores virtuales y su impacto en la determinación del tamaño en tiempo de ejecución.
-- Punteros genéricos (`void*`) y su conversión explícita.
-
----
-
-## Hook Example
+## 2. Hook Example
 
 ```cpp
 #include <iostream>
@@ -110,9 +85,9 @@ int main() {
 
 ---
 
-## Descomposición Under the Hood
+## 3. Descomposición Under the Hood
 
-### Flujo Físico de Memoria en una Free List
+### 3.1 Flujo Físico de Memoria en una Free List
 Cuando la memoria de un objeto `ElementoEspecial` está inactiva (después de llamarse a `delete`), reutilizamos esos mismos bytes físicos para almacenar la estructura `NodoLibre`:
 
 ```
@@ -130,21 +105,21 @@ OBJETO INACTIVO (EN LA FREE LIST):
 
 ---
 
-## Teoría: Sobrecarga de new y delete
+## 4. Teoría: Sobrecarga de new y delete
 
-### Requerimientos de Alineación (Alignment)
+### 4.1 Requerimientos de Alineación (Alignment)
 El estándar de C++ exige que cualquier función de asignación de memoria (`operator new`) devuelva un puntero alineado al tipo de datos correspondiente.
 - Si sobrecargas `operator new` de forma global o mediante pools de memoria personalizados, debes garantizar que las direcciones devueltas cumplan con `alignof(T)`.
 - Si devuelves un puntero desalineado (por ejemplo, una dirección impar para un tipo que requiere alineación de 8 bytes como `double`), la CPU tendrá que realizar múltiples accesos a memoria por lectura, reduciendo drásticamente el rendimiento, o provocando fallos físicos de bus en arquitecturas ARM o RISC.
 
 ---
 
-## Progresión de Complejidad
+## 5. Progresión de Complejidad
 
-### Nivel Simple: Free Lists Básicas
+### 5.1 Nivel Simple: Free Lists Básicas
 Se basan en reutilizar el espacio de los objetos destruidos. Para garantizar que funcione, el tamaño de la clase (`sizeof(T)`) debe ser al menos igual o mayor al tamaño de un puntero (`sizeof(void*)`). Si la clase es vacía, el compilador suele asignarle un tamaño de 1 o 2 bytes. Forzar la presencia de una función virtual añade la dirección del puntero a la *vtable* (8 bytes), solucionando la restricción de tamaño mínimo.
 
-### Nivel Aplicado: Placement New con Pools de Memoria
+### 5.2 Nivel Aplicado: Placement New con Pools de Memoria
 Podemos parametrizar el operador `new` para que el cliente decida de qué pool de memoria asignar recursos.
 - Esto permite aislar la creación de objetos en la pila física o en segmentos contiguos del heap:
 ```cpp
@@ -163,37 +138,35 @@ void* operator new(size_t bytes, MemoryArena* arena) {
 }
 ```
 
-### Nivel Complejo: Sobrecarga de arrays (`operator new[]` y `operator delete[]`)
+### 5.3 Nivel Complejo: Sobrecarga de arrays (`operator new[]` y `operator delete[]`)
 Cuando asignas un arreglo con `new T[N]`, el compilador a menudo almacena el número de elementos `N` en una palabra oculta (*cookie*) al inicio del bloque de memoria física asignado, devolviendo al usuario la dirección desplazada.
 - Si sobrecargas `operator new[]`, debes prever que el tamaño total solicitado por el compilador puede ser mayor que `N * sizeof(T)` debido a esta cookie.
 - Si tu asignador personalizado no devuelve memoria alineada previendo este desplazamiento, la aplicación fallará.
 
 ---
 
-## Diseño de Sistemas
+## 6. Diseño de Sistemas
 En el diseño de sistemas críticos o en tiempo real (misión crítica), está prohibido realizar asignaciones dinámicas libres. Se usan pre-asignadores gigantes en el arranque del sistema y placement new sobre estructuras fijas para eliminar por completo la fragmentación y garantizar predictibilidad temporal absoluta.
 
 ---
 
-## Ejercicios
+## Exercises
 
-### Ejercicio 1 — Analizar la cookie en sobrecarga de arrays
+### Exercise 1 — Analizar la cookie en sobrecarga de arrays
 Crea una clase simple e implementa sobrecargas locales para `operator new[]` y `operator delete[]` imprimiendo el tamaño de bytes solicitado. En el programa principal instancía un arreglo `new Clase[5]`. Compara si el tamaño solicitado es exactamente `5 * sizeof(Clase)` o si el compilador solicitó bytes adicionales para la cookie.
 
 ---
 
-## Errores Comunes y Anti-Patrones
+## 7. Errores Comunes y Anti-Patrones
 - **No verificar diferencias de tamaño en clases heredadas:** Causa desbordamientos de búfer en memoria si una clase derivada más grande intenta asignarse usando el espacio predefinido para la clase base.
 - **Ignorar las restricciones de alineación:** Produce reducciones de rendimiento críticas o fallas físicas en procesadores móviles/bebidos.
 
 ---
 
-## Conclusión y Checklist Mental
-- [ ] ¿Cómo divide C++ la creación de un objeto en dos fases diferenciadas?
-- [ ] ¿Por qué una clase con asignación customizada debe tener un destructor virtual si se planea heredar de ella?
-- [ ] ¿Qué es la "cookie" en la asignación de arreglos y cómo afecta el tamaño solicitado?
-- [ ] ¿Por qué es crítico respetar la alineación de memoria (`alignof`) al devolver punteros en `operator new`?
+## 8. Conclusión
 
 ---
 
-*Siguiente tema sugerido: [30 — Smart Pointers](<30 — Smart Pointers.md>)*
+---
+
+*Next: `30 — Smart Pointers.md` — Punteros inteligentes de la STL.*
