@@ -405,7 +405,7 @@ class Mala : public Base {
 
 *Has completado el módulo final de esta serie. Felicitaciones.*
 
-*Para profundizar más: Revisar [01 — Diferencias entre C, C++ y Rust](<01 — Diferencias entre C, C++ y Rust.md>) con los nuevos conocimientos adquiridos para ver cómo estos mecanismos de bajo nivel diferencian filosóficamente a C++ de Rust y C.*
+*Para profundizar más: Revisar [01 — Diferencias entre C, C++ y Rust](<01_-_Diferencias_entre_C,_C++_y_Rust.md>) con los nuevos conocimientos adquiridos para ver cómo estos mecanismos de bajo nivel diferencian filosóficamente a C++ de Rust y C.*
 
 ---
 
