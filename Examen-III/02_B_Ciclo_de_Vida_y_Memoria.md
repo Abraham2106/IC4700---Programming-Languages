@@ -76,3 +76,97 @@ Dado que no se solicitó memoria dinámica formalmente para el sistema operativo
 Para erradicar la necesidad del comando destructivo manual `delete`, la biblioteca estándar introdujo templates de gestión RAII (`std::unique_ptr<T>`, `std::shared_ptr<T>`).
 
 Un smart pointer es una clase de la pila que encapsula un puntero desnudo. Al salir de su ámbito y ser destruida por las reglas estándar, su propio destructor se encarga de invocar a `delete` sobre el puntero encapsulado internamente, logrando recolección de basura predecible (sin la latencia de un Garbage Collector tradicional).
+
+---
+
+## 5. Inicialización vs Asignación — Constructor vs `operator=` (Examen P2)
+
+Esta es una de las fuentes de confusión más comunes en C++. La regla es simple pero absoluta:
+
+> **`=` en una declaración** → llama al **constructor** (el objeto aún no existe).
+> **`=` sobre un objeto ya construido** → llama a **`operator=`** (el objeto ya existe).
+
+### 5.1 Ejemplo canónico
+
+```cpp
+class A {
+    int n;
+public:
+    A(int a) : n(a) {}              // constructor con argumento
+    A& operator=(int a) { n = a; return *this; }  // operador de asignación
+};
+
+A a(3);   // (1) Constructor A(int)       — inicialización directa
+A b = 5;  // (2) Constructor A(int)       — inicialización por copia (NO operator=)
+a = 7;    // (3) operator=(int)           — asignación sobre objeto existente
+```
+
+| Línea | Qué llama | Justificación |
+|---|---|---|
+| `A a(3);` | **Constructor** `A(int)` | Sintaxis de inicialización directa. El objeto `a` se crea con `n=3`. |
+| `A b = 5;` | **Constructor** `A(int)` | `b` aún no existe. El `=` aquí es **inicialización**, no asignación. El compilador convierte `5` a `A` usando el constructor. Si el constructor fuera `explicit`, **no compilaría**. |
+| `a = 7;` | **`operator=(int)`** | `a` ya está construido. El `=` invoca el operador de asignación, sobreescribiendo `n = 7`. |
+
+### 5.2 Constructor `explicit`
+
+Si se marca el constructor como `explicit`, la inicialización implícita `A b = 5;` deja de funcionar porque el compilador no puede hacer la conversión automática:
+
+```cpp
+explicit A(int a) : n(a) {}
+
+A b = 5;    //  Error: conversión implícita prohibida
+A b(5);     //  OK: inicialización directa explícita
+A b = A(5); //  OK: conversión explícita manual
+```
+
+---
+
+## 6. Errores Comunes en Constructores y Herencia (Examen P4)
+
+### 6.1 Los constructores NO tienen tipo de retorno
+
+Un constructor es el único miembro de una clase que **no tiene tipo de retorno**, ni siquiera `void`. Agregar un tipo convierte la declaración en una función ordinaria con el mismo nombre que la clase, lo que produce un **error de compilación**:
+
+```cpp
+//  CÓDIGO CON ERRORES
+class Foo {
+    Foo& Foo(int i) { /* … */ }  // Error: tipo de retorno 'Foo&' inválido en constructor
+};
+class Bar : public Foo {
+    Bar& Bar() { /* … */ }       // Error: tipo de retorno 'Bar&' inválido en constructor
+};
+```
+
+Hay **tres problemas** en este código:
+
+| # | Problema | Causa | Consecuencia |
+|---|---|---|---|
+| 1 | **Tipo de retorno en el constructor** | `Foo& Foo(int i)` y `Bar& Bar()` declaran un tipo de retorno | **Error de compilación** — los constructores no devuelven nada. |
+| 2 | **Visibilidad `private` por defecto** | En `class`, todos los miembros son `private` si no se especifica `public:` | Si los constructores quedan privados, **no se pueden crear objetos** desde fuera de la clase. |
+| 3 | **`Foo` no tiene constructor por defecto** | Solo se define `Foo(int i)`, eliminando el constructor por defecto implícito | Cuando `Bar` intenta construirse, el compilador busca `Foo()` (sin argumentos) y **no lo encuentra** → error de compilación. |
+
+### 6.2 Versión corregida
+
+```cpp
+//  CÓDIGO CORRECTO
+class Foo {
+public:
+    Foo(int i) { /* … */ }        // Sin tipo de retorno; público
+};
+
+class Bar : public Foo {
+public:
+    Bar() : Foo(0) { /* … */ }   // Inicializa la base explícitamente
+};
+```
+
+**Reglas que aplica la corrección:**
+
+1. **Sin tipo de retorno** en ningún constructor.
+2. **`public:`** antes de los constructores para permitir instanciación desde fuera.
+3. **Lista de inicialización `: Foo(0)`** en `Bar` para invocar el único constructor disponible de `Foo`. Alternativamente, `Foo` podría proveer un constructor por defecto `Foo() {}`.
+
+### 6.3 Regla del Constructor por Defecto
+
+> Si una clase define **cualquier constructor**, el compilador **deja de generar** el constructor por defecto implícito (`ClassName()`).
+> La clase derivada **siempre** debe inicializar la base; si no lo hace explícitamente, el compilador busca el constructor por defecto de la base. Si no existe → **error de compilación**.

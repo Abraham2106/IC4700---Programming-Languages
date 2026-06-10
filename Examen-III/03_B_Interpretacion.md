@@ -72,3 +72,107 @@ Para solventar las fugas masivas, los intérpretes implementan la recolección a
 1. **Roots:** Escanea todo el Stack ($V$) extrayendo cualquier puntero primitivo vivo.
 2. **Mark:** A partir de esas raíces vivas, recorre el grafo de los objetos referenciados en el Heap, marcando una bandera booleana (`true`) en su cabecera.
 3. **Sweep:** El intérprete barre la memoria física bit a bit desde la posición 0. Cualquier bloque en el Heap que no tenga la marca de vida `true` es declarado basura y sobrescrito inmediatamente por estructuras "Unused" para su reutilización, desfragmentando efectivamente el sistema.
+
+---
+
+## 5. Reglas Formales de Pre/Post Incremento (Examen P6)
+
+### 5.1 Las cuatro reglas con notación γ
+
+La evaluación de expresiones con efectos colaterales devuelve **un par** `⟨valor, entorno_nuevo⟩`. La notación $\gamma(x := v)$ indica que en el nuevo entorno, `x` apunta al valor `v`.
+
+$$\gamma \vdash\ \texttt{++x} \Downarrow \langle v+1,\ \gamma(x := v+1)\rangle \quad \text{(pre-incremento: retorna el valor nuevo)}$$
+
+$$\gamma \vdash\ \texttt{x++} \Downarrow \langle v,\ \gamma(x := v+1)\rangle \quad \text{(post-incremento: retorna el valor viejo)}$$
+
+$$\gamma \vdash\ \texttt{--x} \Downarrow \langle v-1,\ \gamma(x := v-1)\rangle \quad \text{(pre-decremento: retorna el valor nuevo)}$$
+
+$$\gamma \vdash\ \texttt{x--} \Downarrow \langle v,\ \gamma(x := v-1)\rangle \quad \text{(post-decremento: retorna el valor viejo)}$$
+
+Donde $v$ es el valor **actual** de `x` en $\gamma$ al momento de evaluar. La evaluación encadena estados de **izquierda a derecha**: el $\gamma'$ que produce la subexpresión izquierda es el $\gamma$ de entrada de la derecha.
+
+### 5.2 Ejemplo a) — `++x - x--` con `x := 1`
+
+| Paso | Expresión | Valor aportado | `x` después |
+|---|---|---|---|
+| 1 | `++x` (pre, `x=1`) | **2** | `x = 2` |
+| 2 | `x--` (post, `x=2`) | **2** | `x = 1` |
+| **Resultado** | `2 - 2` | **0** | **x = 1** |
+
+**Traza formal:**
+
+```
+γ₀ = {x:=1}
+γ₀ ⊢ ++x  ⟹ ⟨2, γ₁={x:=2}⟩
+γ₁ ⊢ x--  ⟹ ⟨2, γ₂={x:=1}⟩
+γ₀ ⊢ (++x - x--)  ⟹ ⟨2 - 2, γ₂⟩  =  ⟨0, {x:=1}⟩
+```
+
+### 5.3 Ejemplo b) — `x-- - --x` con `x := 1`
+
+| Paso | Expresión | Valor aportado | `x` después |
+|---|---|---|---|
+| 1 | `x--` (post, `x=1`) | **1** | `x = 0` |
+| 2 | `--x` (pre, `x=0`) | **−1** | `x = −1` |
+| **Resultado** | `1 - (−1)` | **2** | **x = −1** |
+
+**Traza formal:**
+
+```
+γ₀ = {x:=1}
+γ₀ ⊢ x--   ⟹ ⟨1, γ₁={x:=0}⟩
+γ₁ ⊢ --x   ⟹ ⟨-1, γ₂={x:=-1}⟩
+γ₀ ⊢ (x-- - --x)  ⟹ ⟨1 - (-1), γ₂⟩  =  ⟨2, {x:=-1}⟩
+```
+
+> **Resumen P6:** a) vale **0**, queda `x = 1` · b) vale **2**, queda `x = −1`.
+
+---
+
+## 6. Semántica Operacional de Bloques y Ámbitos (Examen P7)
+
+### 6.1 La regla formal del bloque
+
+Un bloque `{ s₁ … sₙ }` introduce un **nuevo ámbito local**. En semántica operacional (intérprete), la regla se representa con el punto `.` separando el entorno exterior del marco local:
+
+$$\frac{\gamma\ .\ \emptyset \vdash s_1 \cdots s_n \Downarrow \gamma'\ .\ \delta}{\gamma \vdash \{s_1 \cdots s_n\} \Downarrow \gamma'}$$
+
+### 6.2 Lectura de la regla
+
+| Símbolo | Significado |
+|---|---|
+| $\gamma$ | Entorno **exterior** al bloque (variables ya existentes antes de entrar). |
+| $\emptyset$ | Marco local **vacío** que se crea al entrar al bloque. |
+| $\gamma\ .\ \emptyset$ | Entorno completo dentro del bloque: exterior apilado sobre el local. |
+| $s_1 \cdots s_n$ | Las sentencias que se ejecutan dentro del bloque, de izquierda a derecha. |
+| $\gamma'$ | Entorno exterior **modificado** por las sentencias (p.ej. `x = 5` donde `x` es variable del exterior). |
+| $\delta$ | Variables declaradas **dentro** del bloque. |
+| $\gamma'\ .\ \delta$ | Estado al terminar el bloque: exterior modificado más el marco local con sus variables. |
+| Conclusión $\Downarrow \gamma'$ | Al salir del bloque, **solo se conserva $\gamma'$**. El marco local $\delta$ se **descarta**. |
+
+### 6.3 Explicación en palabras
+
+1. Al **entrar** a un bloque `{ }`, se "apila" un nuevo marco vacío sobre el entorno actual.
+2. Las sentencias se ejecutan en ese entorno compuesto `γ . ∅`:
+   - Pueden **leer y modificar** variables del entorno exterior `γ` → los cambios persisten en `γ'`.
+   - Pueden **declarar** nuevas variables locales → van a `δ`.
+3. Al **salir** del bloque, el marco `δ` se destruye completo. Solo `γ'` (el entorno exterior con sus cambios) sobrevive.
+
+Esto formaliza el **alcance léxico**: una variable local deja de existir al salir del ámbito donde fue declarada.
+
+### 6.4 Ejemplo concreto
+
+```cpp
+int x = 0;          // γ = {x:=0}
+{
+    int y = 5;      // δ = {y:=5}
+    x = x + y;     // γ' = {x:=5}  (modifica el exterior)
+}
+// Aquí: γ' = {x:=5}, δ={y:=5} fue descartado → y ya no existe
+```
+
+Usando la regla:
+- **Premisa:** `{x:=0} . {} ⊢ int y=5; x=x+y; ⟹ {x:=5} . {y:=5}`
+- **Conclusión:** `{x:=0} ⊢ { int y=5; x=x+y; } ⟹ {x:=5}`
+
+`y` desapareció; `x` quedó con el nuevo valor. Eso es exactamente el comportamiento esperado del alcance por bloque.

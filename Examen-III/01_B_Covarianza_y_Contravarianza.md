@@ -104,3 +104,53 @@ int main() {
 ```
 
 Debido a que un arreglo mutable permite inserción (exigiendo contravarianza de entrada) y lectura (exigiendo covarianza de salida), la única intersección matemática lógicamente pura que satisface Liskov en ambos frentes es la **Invarianza Estricta**. Un `Perro[]` **no** es un `Animal[]`.
+
+---
+
+## 5. Aplicación Directa al Examen — Instructor / ProfesorMaestria (Examen P5)
+
+### 5.1 El caso planteado
+
+Dada la jerarquía `UnidadDePosgrado <: Unidad` y `CursoMaestria <: Curso`:
+
+```
+class Instructor {
+    imparte(Unidad) -> List(Curso)
+}
+class ProfesorMaestria extends Instructor {
+    imparte(UnidadDePosgrado) -> List(CursoMaestria)   // ¿cumple LSP?
+}
+```
+
+### 5.2 Análisis por componente
+
+Las reglas de varianza para redefinir métodos respetando el LSP son:
+
+- **Parámetros (entrada):** deben ser **iguales o más generales** que los del padre → **contravarianza**.
+- **Retorno (salida):** debe ser **igual o más específico** que el del padre → **covarianza**.
+
+| Parte redefinida | Padre → Hijo | Requerido por LSP | ¿Cumple? |
+|---|---|---|---|
+| **Parámetro** | `Unidad` → `UnidadDePosgrado` (se estrecha) | Contravariante (igual o más general) |  **Viola LSP** |
+| **Retorno** | `List(Curso)` → `List(CursoMaestria)` (se especializa) | Covariante (igual o más específico) |  Correcto |
+
+### 5.3 ¿Por qué viola el LSP el parámetro?
+
+Un cliente que tiene una referencia de tipo `Instructor` espera poder llamar a `imparte(cualquierUnidad)`. Si en tiempo de ejecución el objeto real es un `ProfesorMaestria` que solo acepta `UnidadDePosgrado`, la llamada con una `Unidad` base **fallaría** — el subtipo no es sustituible.
+
+### 5.4 Versión que sí cumple el LSP
+
+```
+class ProfesorMaestria extends Instructor {
+    imparte(Unidad) -> List(CursoMaestria)
+    //       ↑                  ↑
+    // Parámetro igual al padre  Retorno más específico (covariante )
+}
+```
+
+El parámetro se mantiene en `Unidad` (acepta todo lo que acepta el padre) y el retorno se especializa a `List(CursoMaestria)` — covarianza permitida.
+
+### 5.5 Nota sobre C++
+
+C++ **soporta covarianza de retorno** para punteros y referencias (tipos de retorno covariantes), pero **no soporta contravarianza de parámetros** en overrides: cambiar el tipo de un parámetro crea una **sobrecarga** (`overload`), no una sobreescritura (`override`), lo que puede ocultar silenciosamente el método base.
+

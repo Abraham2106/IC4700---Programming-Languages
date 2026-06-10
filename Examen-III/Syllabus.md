@@ -63,3 +63,32 @@ Las notas de estudio de este temario deben extraerse y consolidarse a partir de 
 3. `sources/idiosincracias_cpp(1).md`: Notas detalladas sobre las particularidades y esquinas del lenguaje C++ (José Castro).
 4. Carpeta `C++`: Guías de estudio locales (archivos del `01` al `34`).
 5. Carpeta `Examen-II/Prolog`: Guías de estudio de fundamentos y listas de Prolog (archivos del `01` al `04`).
+
+---
+
+## 3. Mapa de Preguntas del Examen Real → Archivos de Estudio
+
+Las siguientes preguntas corresponden al examen real. Cada una está cubierta en las secciones indicadas.
+
+| Pregunta | Tema | Archivo | Sección |
+|---|---|---|---|
+| **P1** | Recorridos de árbol Prolog: in-order, preorder con listas por diferencia | `04_B_Listas_y_CSP.md` | §4 completo |
+| **P2** | Constructor vs `operator=`; `A b = 5` es constructor, no asignación | `02_B_Ciclo_de_Vida_y_Memoria.md` | §5 completo |
+| **P3** | C++ no garantiza LSP; violación Rectángulo/Cuadrado | `01_A_Principio_de_Liskov.md` | §2 y §3.1 |
+| **P4** | Constructores con tipo de retorno ilegal; visibilidad; sin ctor base | `02_B_Ciclo_de_Vida_y_Memoria.md` | §6 completo |
+| **P5** | LSP + covarianza/contravarianza; caso Instructor/ProfesorMaestria | `01_B_Covarianza_y_Contravarianza.md` | §2, §3, §5 |
+| **P6** | Pre/post incremento: reglas formales γ; `++x - x--` y `x-- - --x` | `03_B_Interpretacion.md` | §5 completo |
+| **P7** | Regla semántica del bloque; ámbito local δ que se descarta al salir | `03_B_Interpretacion.md` | §6 completo |
+
+---
+
+## 4. Orden de Estudio Recomendado para el Examen
+
+1. **P3 LSP** → `01_A_Principio_de_Liskov.md` (ya bien cubierto, repasar)
+2. **P5 Covarianza/Contravarianza** → `01_B_Covarianza_y_Contravarianza.md` §2–3 y §5
+3. **P2 Constructor vs `=`** → `02_B_Ciclo_de_Vida_y_Memoria.md` §5
+4. **P4 Errores de constructores** → `02_B_Ciclo_de_Vida_y_Memoria.md` §6
+5. **P6 Incrementos** → `03_B_Interpretacion.md` §5 (memorizar las 4 reglas, practicar trazas)
+6. **P7 Bloques** → `03_B_Interpretacion.md` §6 (memorizar la regla formal, entender δ)
+7. **P1 Árboles Prolog** → `04_B_Listas_y_CSP.md` §4 (practicar `tree2inorder` y `preorder_dl`)
+
