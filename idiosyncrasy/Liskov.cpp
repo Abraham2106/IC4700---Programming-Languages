@@ -162,7 +162,54 @@ namespace lsp::solucion::rectangulo {
 // =============================================================================
 namespace lsp::violacion::coleccion {
 
-    // TODO: implementar en el hilo
+    // La base promete aceptar CUALQUIER entero.
+    class VectorBase {
+    protected:
+        std::vector<int> datos;
+    public:
+        virtual void agregar(int n) {
+            datos.push_back(n);
+        }
+        const std::vector<int>& get() const { return datos; }
+    };
+
+    // VIOLACIÓN: la derivada ENDURECE la precondición — rechaza negativos.
+    // Un cliente que use un VectorBase* puede pasar -1 sin problema.
+    // Si en realidad tiene un VectorSoloPositivos, explota con una excepción
+    // que no esperaba: el subtipo NO es sustituible.
+    class VectorSoloPositivos : public VectorBase {
+    public:
+        void agregar(int n) override {
+            if (n < 0)
+                throw std::invalid_argument("Solo se permiten enteros positivos");
+            datos.push_back(n);
+        }
+    };
+
+    // Cliente escrito contra la interfaz BASE — no sabe qué tipo real recibe.
+    void llenar(VectorBase& v) {
+        v.agregar(10);
+        v.agregar(-5);   // ← espera que esto funcione; con VectorBase sí.
+                          //   con VectorSoloPositivos → excepción inesperada.
+    }
+
+    void demo() {
+        std::cout << "--- [3] VectorSoloPositivos (violacion) ---\n";
+
+        VectorBase base;
+        llenar(base);    // OK: base acepta -5 sin problema
+        std::cout << "  VectorBase: ";
+        for (int n : base.get()) std::cout << n << " ";
+        std::cout << "\n";
+
+        VectorSoloPositivos restringido;
+        try {
+            llenar(restringido);   // FALLA: -5 lanza excepcion
+        } catch (const std::invalid_argument& e) {
+            std::cout << "  VectorSoloPositivos: excepcion ← [VIOLACION LSP]: "
+                      << e.what() << "\n";
+        }
+    }
 
 } // namespace lsp::violacion::coleccion
 
@@ -174,7 +221,48 @@ namespace lsp::violacion::coleccion {
 // =============================================================================
 namespace lsp::solucion::coleccion {
 
-    // TODO: implementar en el hilo
+    // Fix: el filtro es una RESPONSABILIDAD SEPARADA, no una restricción
+    // sobre el contrato base. Usamos COMPOSICIÓN en lugar de herencia pública.
+    //
+    // VectorBase sigue aceptando cualquier entero — su contrato no cambia.
+    class VectorBase {
+        std::vector<int> datos;
+    public:
+        void agregar(int n) { datos.push_back(n); }
+        const std::vector<int>& get() const { return datos; }
+    };
+
+    // VectorFiltrado CONTIENE un VectorBase; no hereda de él.
+    // No hace promesas de sustituibilidad: es una clase independiente.
+    class VectorFiltrado {
+        VectorBase interno;
+    public:
+        // Responsabilidad propia: filtrar. No viola ningún contrato ajeno.
+        void agregar_si_positivo(int n) {
+            if (n >= 0) interno.agregar(n);
+            // Simplemente ignora los negativos; no lanza excepción inesperada.
+        }
+        const std::vector<int>& get() const { return interno.get(); }
+    };
+
+    void demo() {
+        std::cout << "--- [4] VectorFiltrado (solucion por composicion) ---\n";
+
+        VectorBase base;
+        base.agregar(10);
+        base.agregar(-5);   // OK: VectorBase siempre acepta todo
+        std::cout << "  VectorBase: ";
+        for (int n : base.get()) std::cout << n << " ";
+        std::cout << "\n";  // 10 -5
+
+        VectorFiltrado filtrado;
+        filtrado.agregar_si_positivo(10);
+        filtrado.agregar_si_positivo(-5);  // ignorado silenciosamente
+        filtrado.agregar_si_positivo(7);
+        std::cout << "  VectorFiltrado: ";
+        for (int n : filtrado.get()) std::cout << n << " ";
+        std::cout << "  [OK]\n";  // 10 7
+    }
 
 } // namespace lsp::solucion::coleccion
 
@@ -186,7 +274,46 @@ namespace lsp::solucion::coleccion {
 // =============================================================================
 namespace lsp::violacion::aves {
 
-    // TODO: implementar en el hilo
+    // La base Ave promete la postcondición: volar() siempre funciona.
+    class Ave {
+    public:
+        virtual std::string volar() {
+            return "Estoy volando";
+        }
+        virtual std::string nombre() const { return "Ave"; }
+        virtual ~Ave() = default;
+    };
+
+    // VIOLACIÓN: Pinguino hereda de Ave pero ROMPE la postcondición:
+    // volar() lanza una excepción que el cliente no espera.
+    class Pinguino : public Ave {
+    public:
+        std::string volar() override {
+            throw std::logic_error("Los pinguinos no pueden volar");
+        }
+        std::string nombre() const override { return "Pinguino"; }
+    };
+
+    // Cliente escrito contra la interfaz Ave — asume que volar() siempre
+    // devuelve un string. Con Pinguino explota.
+    void hacer_volar(Ave& ave) {
+        std::cout << "  " << ave.nombre() << ": " << ave.volar() << "\n";
+    }
+
+    void demo() {
+        std::cout << "--- [5] Pinguino no puede volar (violacion) ---\n";
+
+        Ave golondrina;
+        hacer_volar(golondrina);   // OK
+
+        Pinguino tux;
+        try {
+            hacer_volar(tux);      // FALLA: postcondicion rota
+        } catch (const std::logic_error& e) {
+            std::cout << "  Pinguino: excepcion ← [VIOLACION LSP]: "
+                      << e.what() << "\n";
+        }
+    }
 
 } // namespace lsp::violacion::aves
 
@@ -198,7 +325,66 @@ namespace lsp::violacion::aves {
 // =============================================================================
 namespace lsp::solucion::aves {
 
-    // TODO: implementar en el hilo
+    // Fix: segregar la capacidad de vuelo en una interfaz aparte.
+    // Ave solo promete lo que TODOS los aves comparten.
+    // AveVoladora extiende con la promesa de vuelo.
+    //
+    // Este patrón es también el Principio de Segregación de Interfaces (ISP),
+    // la 'I' de SOLID — evitar interfaces «gordas» que no todos pueden cumplir.
+
+    class Ave {
+    public:
+        virtual std::string nombre() const = 0;
+        virtual std::string describir() const { return "Soy un ave"; }
+        virtual ~Ave() = default;
+    };
+
+    // Capacidad de vuelo segregada: solo quien PUEDE volar la implementa.
+    class AveVoladora : public Ave {
+    public:
+        virtual std::string volar() = 0;
+    };
+
+    // Golondrina SÍ puede volar — hereda de AveVoladora.
+    class Golondrina : public AveVoladora {
+    public:
+        std::string nombre() const override { return "Golondrina"; }
+        std::string volar() override { return "Volando veloz sobre los campos"; }
+    };
+
+    // Pinguino NO puede volar — hereda de Ave directamente.
+    // No hace ninguna promesa de vuelo. LSP preservado.
+    class Pinguino : public Ave {
+    public:
+        std::string nombre() const override { return "Pinguino"; }
+        std::string nadar() const { return "Nadando en aguas heladas"; }
+    };
+
+    // Cliente de AveVoladora — solo lo llama con objetos que sí vuelan.
+    void hacer_volar(AveVoladora& ave) {
+        std::cout << "  " << ave.nombre() << ": " << ave.volar() << "  [OK]\n";
+    }
+
+    // Cliente de Ave — solo usa la interfaz base (describir/nombre).
+    void presentar(const Ave& ave) {
+        std::cout << "  " << ave.nombre() << ": " << ave.describir() << "\n";
+    }
+
+    void demo() {
+        std::cout << "--- [6] Segregacion de interfaz (solucion) ---\n";
+
+        Golondrina g;
+        Pinguino p;
+
+        // Todos son Aves
+        presentar(g);
+        presentar(p);
+
+        // Solo la Golondrina vuela
+        hacer_volar(g);
+        // hacer_volar(p);  ← Error de compilacion: Pinguino no es AveVoladora
+        std::cout << "  " << p.nombre() << ": " << p.nadar() << "\n";
+    }
 
 } // namespace lsp::solucion::aves
 
@@ -211,11 +397,39 @@ int main() {
     std::cout << "=== LSP: Principio de Sustitución de Liskov ===\n\n";
 
     // [1] Violación Rectángulo/Cuadrado
+    {
+        lsp::violacion::rectangulo::Rectangulo rect(3, 4);
+        lsp::violacion::rectangulo::Cuadrado   cuad(5);
+        std::cout << "Rectangulo (esperado 50): ";
+        lsp::violacion::rectangulo::redimensionar(rect);  // 50 [OK]
+        std::cout << "Cuadrado   (esperado 50): ";
+        lsp::violacion::rectangulo::redimensionar(cuad);  // 100 [VIOLACION LSP]
+    }
+    std::cout << "\n";
+
     // [2] Solución Rectángulo/Cuadrado
+    {
+        lsp::solucion::rectangulo::Rectangulo rect(3, 4);
+        lsp::solucion::rectangulo::Cuadrado   cuad(5);
+        lsp::solucion::rectangulo::imprimir_area(rect);   // 12 [OK]
+        lsp::solucion::rectangulo::imprimir_area(cuad);   // 25 [OK]
+    }
+    std::cout << "\n";
+
     // [3] Violación Colección
+    lsp::violacion::coleccion::demo();
+    std::cout << "\n";
+
     // [4] Solución Colección
+    lsp::solucion::coleccion::demo();
+    std::cout << "\n";
+
     // [5] Violación Aves
+    lsp::violacion::aves::demo();
+    std::cout << "\n";
+
     // [6] Solución Aves
+    lsp::solucion::aves::demo();
 
     return 0;
 }
